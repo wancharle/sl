@@ -2,16 +2,16 @@
 import stdlib
 
 #imports de arquivos javascripts crus
-import libs.leaflet05
-import libs.spin
-import libs.leaflet.spin
+#import libs.leaflet05
+#import libs.spin
+#import libs.leaflet.spin
 
 L.Icon.Default.imagePath = "images/leaflet"
-import libs.leaflet.markercluster.markercluster
-import libs.jquery191min
-import libs.jquery.getUrlParam
-import libs.tabletop
-import control
+#import libs.leaflet.markercluster.markercluster
+#import libs.jquery191min
+#import libs.jquery.getUrlParam
+#import libs.tabletop
+#import control
 import utilidades
 
 

@@ -26,7 +26,7 @@ class Marcador:
             m.setIcon(self.icon)
             self.m = m
             self.m.slinfo = self
-            self.m.bindPopup(m.slinfo.texto)
+            self.m.bindPopup(m.slinfo.texto,{'maxWidth':640})
         return self.m
 
 

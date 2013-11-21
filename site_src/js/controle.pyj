@@ -60,7 +60,7 @@ class Controle:
                self.mostrarIconesMarcVisiveis()
            else:
                self.esconderIconesMarcVisiveis()
-    
+
     def mostrarIconesMarcVisiveis(self):
         for m in self.getMarcadoresVisiveis():
             m.setIcon(m.slinfo.icon)
@@ -80,23 +80,24 @@ class Controle:
             if mark.hasOwnProperty("slinfo")  :
                 marcadores_visiveis.append(mark)
         return marcadores_visiveis
-    
+
     def markerClick(self,ev):
         m = ev.layer
         self.marcador_clicado = m
-        if m.slinfo.ultimo_zoom:
-            self.sl.map.setView(m.slinfo.ultimo_center,m.slinfo.ultimo_zoom)
-            m.slinfo.ultimo_zoom = None 
-            m.slinfo.ultimo_center = None
-            self.sl.map.closePopup()
-        else:
-            m.slinfo.ultimo_zoom =  self.sl.map.getZoom()
-            m.slinfo.ultimo_center = self.sl.map.getCenter()
-            center = new L.LatLng(m.slinfo.latitude,m.slinfo.longitude)
-            self.sl.map.setView(center, 18)
-            #self.showMarcPopup(m)
+        if self.sl.esconder_icones:
+            if m.slinfo.ultimo_zoom:
+                self.sl.map.setView(m.slinfo.ultimo_center,m.slinfo.ultimo_zoom)
+                m.slinfo.ultimo_zoom = None 
+                m.slinfo.ultimo_center = None
+                self.sl.map.closePopup()
+            else:
+                m.slinfo.ultimo_zoom =  self.sl.map.getZoom()
+                m.slinfo.ultimo_center = self.sl.map.getCenter()
+                center = new L.LatLng(m.slinfo.latitude,m.slinfo.longitude)
+                self.sl.map.setView(center, 18)
+                #self.showMarcPopup(m) 
 
-  
+
     def addCatsToControl(self,map_id):
         if dict.keys(self.sl.dados.categorias).length > 1:
             op ="#"+map_id+ " div.searchlight-opcoes" 
@@ -125,12 +126,13 @@ class Controle:
             self.sl.markers.fire("data:loading")
             setTimeout("SL('"+self.sl.map_id+"').control.carregaDados()",50);
 
-    def carregaDados(self)
+    def carregaDados(self):
         sl = self.sl
         $("input:checkbox[name="+self.sl.map_id+"-cat]:checked").each(def ():
-            cat=$(self).val();
+            cat=$(this).val();
             sl.dados.catAddMarkers(cat,sl.markers);
         );
+
         sl.map.fitBounds(sl.markers.getBounds())
         sl.markers.fire("data:loaded") 
         sl.control.atualizarIconesMarcVisiveis()

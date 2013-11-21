@@ -1,5 +1,4 @@
 
-import exemplos.markercluster
 import exemplos.portoalegre
 
 OnibusAzul = new L.icon({ iconUrl:getSLpath()+"../images/onibus_azul.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
@@ -35,7 +34,9 @@ def onSlcarregaDados(sl):
             sl.autoZoom()   
          
 def exemplo1(): 
-    mps = new Searchlight("js/exemplos/121.json",converte_item1,"map1",None,False,False)
+
+    osm='http://{s}.tile.cloudmade.com/bbcf9165c23646efbb1828828278c8bc/997/256/{z}/{x}/{y}.png';
+    mps = new Searchlight("js/exemplos/121.json",converte_item1,"map1",None,False,False,osm);
 
        
 
@@ -56,4 +57,4 @@ def exemplos():
     exemplo_gdoc()
     portoalegre_cc('map')
 
-
+window.exemplos = exemplos
