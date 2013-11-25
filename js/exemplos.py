@@ -1,3 +1,4 @@
+import stdlib
 
 import exemplos.portoalegre
 
@@ -29,7 +30,8 @@ def onSlcarregaDados(sl):
             polyline = L.polyline(v, {color: 'blue'}).addTo(sl.map);
             v=sl.dados.getCatLatLng('VOLTA')
             polyline = L.polyline(v, {color: 'black'}).addTo(sl.map);
-     
+            sl.autoZoom()
+
     if sl.map_id == "map_gdoc":
             sl.autoZoom()   
          

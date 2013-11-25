@@ -156,5 +156,4 @@ class Searchlight:
         self.map_ultimo_zoom =  self.map.getZoom()
         self.map_ultimo_center = self.map.getCenter()
 
-  
 

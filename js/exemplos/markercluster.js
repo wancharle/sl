@@ -1,4 +1,5 @@
-var markers = new L.MarkerClusterGroup();
+var  markers= new L.MarkerClusterGroup();
+
 var markersList = [];
 function populate() {
     for (var i = 0; i < 400; i++) {
@@ -35,6 +36,8 @@ function exemplo_markercluster(){
 			latlng = new L.LatLng(-20.277233,-40.303752 );
 
 		 map2 = new L.Map('map_cluster', {center: latlng, zoom: 15, layers: [cloudmade]});
+
+       
 		populate();
 		map2.addLayer(markers);
         

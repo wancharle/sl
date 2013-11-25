@@ -36,3 +36,4 @@ monografia.pdf
 *.nls
 *.bak
 site/
+*.py~
