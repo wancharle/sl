@@ -37,7 +37,7 @@ def main():
        window.onSLcarregaDados=def(sl):
             sl.autoZoom()
     
-
+window.main = main
 sl_IconCluster = new L.DivIcon({ html: '<div><span>1</span></div>', className: 'marker-cluster marker-cluster-small', iconSize: new L.Point(40, 40) });
 sl_IconePadrao = new L.Icon.Default()
 
