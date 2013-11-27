@@ -1,6 +1,6 @@
 import stdlib
 
-import exemplos.portoalegre
+import portoalegre
 
 OnibusAzul = new L.icon({ iconUrl:getSLpath()+"../images/onibus_azul.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
 OnibusVolta = new L.icon({ iconUrl:getSLpath()+"../images/onibus_volta.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
