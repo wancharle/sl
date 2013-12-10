@@ -7,7 +7,20 @@ def getJSON(url,func):
         if (xhr.overrideMimeType):
             xhr.overrideMimeType("application/json");
     ,'contentType': 'application/json','mimeType': "textPlain"})
+
 def getURLParameter(name):
     return $(document).getUrlParam(name)
+
+
+class Dicionario:
+    def __init__(self,js_hash):
+      self.keys=dict.keys(js_hash) 
+      self.data = js_hash
+
+    def get(self,key,value):
+            if key in self.keys:
+                return self.data[key]
+            else:
+                return value
 
 

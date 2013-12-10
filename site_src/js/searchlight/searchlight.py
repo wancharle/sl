@@ -48,28 +48,30 @@ def SL(map_id):
     "funcao global para pegar a referencia do objeto mapa"
     return sl_referencias[map_id]
 window.SL = SL
+
 class Searchlight:
 
-    def __init__(self, url=None,func_convert=None,map_id="map",icones = None,clusterizar=True,esconder_icones=True,urlosm="http://{s}.tile.osm.org/{z}/{x}/{y}.png"):
+    def __init__(self,opcoes={}):
+    
         nonlocal referencias
-        sl_referencias[map_id]  = self 
-        self.map_id= map_id
-        self.esconder_icones = esconder_icones
-        self.clusterizar = clusterizar
-        self.Icones = icones
-        self.urlosm = urlosm       
-        # se nao for informada a fonte de dados procura no parametro data
-        if url:
-            self.url = url
-        else:
+        d = Dicionario(opcoes)
+        self.map_id =  d.get('map_id','map')
+        sl_referencias[self.map_id]  = self 
+
+
+        self.Icones =  d.get('icones', None)
+        self.esconder_icones =  d.get('esconder_icones', True)
+        self.clusterizar =  d.get('clusterizar', True)
+
+        self.urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
+        self.url =  d.get('url', None)
+        if not self.url:
             self.url = decodeURIComponent(getURLParameter("data"))
         
         # funcao de conversao para  geoJSON
-        if func_convert:
-            self.func_convert = func_convert
-        else:
-            self.func_convert = def(item): return item
-
+        func = def(item): return item
+        self.func_convert = d.get('convert',func)
+   
         self.create()
         
         self.dados =  Dados()

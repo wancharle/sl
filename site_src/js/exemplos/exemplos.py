@@ -38,7 +38,15 @@ def onSlcarregaDados(sl):
 def exemplo1(): 
 
     osm='http://{s}.tile.cloudmade.com/bbcf9165c23646efbb1828828278c8bc/997/256/{z}/{x}/{y}.png';
-    mps = new Searchlight("js/exemplos/121.json",converte_item1,"map1",None,False,False,osm);
+    conf = {
+        'url':"js/exemplos/121.json", 
+        'convert':converte_item1,
+        'map_id':'map1',
+        'url_osm':osm,
+        'esconder_icones': False,
+        'clusterizar': False
+    }
+    mps = new Searchlight(conf);
 
        
 
@@ -46,7 +54,12 @@ def exemplo1():
 
 def exemplo_gdoc():
     public_spreadsheet_url = 'https://docs.google.com/spreadsheet/pub?key=0AhU-mW4ERuT5dHBRcGF5eml1aGhnTzl0RXh3MHdVakE&single=true&gid=0&output=html';
-    mps = new Searchlight(public_spreadsheet_url,null,'map_gdoc',None, True, False)
+    conf = {
+            'url':public_spreadsheet_url, 
+            'map_id':'map_gdoc',
+            'esconder_icones':False
+            }
+    mps = new Searchlight(conf)
 
 
 
