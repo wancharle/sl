@@ -37,3 +37,4 @@ monografia.pdf
 *.bak
 site/
 *.py~
+node_modules/
