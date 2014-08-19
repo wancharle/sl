@@ -69,7 +69,7 @@ window.SLUndoRedoControl = L.Control.extend({
         stop = L.DomEvent.stopPropagation
         #  initialize other DOM elements, add listeners, etc.
         L.DomEvent.on(container, 'click', stop)
-        L.DomEvent.on(con.tainer, 'mousedown', stop)
+        L.DomEvent.on(container, 'mousedown', stop)
         L.DomEvent.on(container, 'mouseover', stop)
         L.DomEvent.on(container, 'touchstart', stop)
         L.DomEvent.on(container, 'touchend', stop)

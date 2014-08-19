@@ -18,6 +18,10 @@ module.exports = (grunt) ->
       dist:
         src:[
           'build/dependencias.js',
+          'js/getUrlParam.js',
+          'js/spin.js',
+          'js/leaflet.spin.js',
+          'js/markercluster/leaflet.markercluster-src.js',
           'build/searchlight-core.js',
            
           ],
