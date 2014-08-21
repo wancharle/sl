@@ -39,7 +39,7 @@ class Controle
         @markerClick(ev)
     )
   
-    @clusterCtr = ClusterCtr(@sl)
+    @clusterCtr = new ClusterCtr(@sl)
 
   hide_opcoes : (event) =>
     $(@id_opcoes).hide()
@@ -78,7 +78,7 @@ class Controle
       for m of marcadores
           mark = marcadores[m]
           if mark.hasOwnProperty("slinfo")
-              marcadores_visiveis.append(mark)
+              marcadores_visiveis.push(mark)
       return marcadores_visiveis
 
   markerClick: (ev) =>
@@ -104,7 +104,7 @@ class Controle
           ul =op + " ul"
           cats = []
           for k of  @sl.dados.categorias
-              cats.append([k,@sl.dados.categorias[k].length])
+              cats.push([k,@sl.dados.categorias[k].length])
           cats.sort( (a,b) -> b[1]-a[1])
           
           $(ul).empty()

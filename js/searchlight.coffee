@@ -109,6 +109,7 @@ class Searchlight
       for d, i in data
         @addItem(d)
     catch e
+      console.log(e)
       @markers.fire("data:loaded")
       alert("Não foi possivel carregar os dados do mapa. Verifique se a fonte de dados está formatada corretamente.")
       return

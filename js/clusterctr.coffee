@@ -8,8 +8,8 @@ class PilhaDeZoom
 
     @id_undozoom = "#"+@sl.map_id+ " div.searchlight-undozoom" 
     html = ""
-    html+="<a class='undo' title='desfazer zoom em grupo' href='javascript:SL(\""+@sl.map_id+"\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>"
-    html+="<a class='redo' title='refazer zoom em grupo' href='javascript:SL(\""+@sl.map_id+"\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>"
+    html+="<a class='undo' title='desfazer zoom em grupo' href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>"
+    html+="<a class='redo' title='refazer zoom em grupo' href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>"
     html+="&nbsp;"
     $(@id_undozoom).append(html)
     $(@id_undozoom).hide()
@@ -23,22 +23,22 @@ class PilhaDeZoom
   salva_zoom: ()=>
     zoom =  @sl.map.getZoom()
     center = @sl.map.getCenter()
-    @pilha.append([center,zoom])
+    @pilha.push([center,zoom])
     #@pilha_redo = [] # TODO: pensar em uma forma melhor de zera a pulha do redo
     @last_undo=null
     @show_undo()
     @hide_redo()
-    @undo_index = len(@pilha)-1
+    @undo_index = @pilha.length - 1
 
   desfazer: () =>
     if not @last_undo
       z =  @sl.map.getZoom()
       c = @sl.map.getCenter()
       @last_undo = [c,z]
-      @pilha.append(@last_undo)
+      @pilha.push(@last_undo)
 
-    if @undo_index==len(@pilha)-1
-      @undo_index=len(@pilha)-2
+    if @undo_index==(@pilha.length - 1)
+      @undo_index= ( @pilha.length - 2)
 
     [center,zoom] = @pilha[@undo_index]
     @undo_index -= 1
@@ -56,7 +56,7 @@ class PilhaDeZoom
     [center,zoom] = @pilha[@undo_index+1]
     @undo_index+=1
     @sl.map.setView(center, zoom)
-    if @undo_index>=len(@pilha)-1
+    if @undo_index>= @pilha.length - 1
          @hide_redo()
     @show_undo()
 
@@ -97,18 +97,18 @@ class PilhaDeZoom
 
 
   esta_vazia: () =>
-    return len(@pilha)==0
+    return @pilha.length ==0
 
 
 class ClusterCtr
   constructor: (sl) ->
     @sl = sl
     @criaPopup()
-    @pilha_de_zoom = PilhaDeZoom(sl)
+    @pilha_de_zoom = new PilhaDeZoom(@sl)
     @clusters = {}
     
     @id_analise = "#"+@sl.map_id+ " div.searchlight-analise"
-    $(@id_analise).append("<p class='center'><a href='javascript:SL(\""+@sl.map_id+"\").control.clusterCtr.desfocar()'>DESFOCAR</a></p>")
+    $(@id_analise).append("<p class='center'><a href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.desfocar()'>DESFOCAR</a></p>")
     $(@id_analise).hide()
 
     @sl.map.on('dblclick', (a) =>
@@ -129,7 +129,7 @@ class ClusterCtr
           @clusterDuploClick(a)
       )
       @sl.markers.on('clusterclick',  (a) =>
-          if dict.keys(@sl.dados.categorias).length > 1
+          if Object.keys(@sl.dados.categorias).length > 1
               @clusterClick(a)
           else
               a.layer.zoomToBounds()
@@ -140,10 +140,10 @@ class ClusterCtr
   criaPopup: () =>
     popup = L.popup()
     @popup = popup
-    @timeUltimoClick = Date().getTime()
+    @timeUltimoClick = new Date().getTime()
 
   clusterClick: (a=null) =>
-    d = Date()
+    d = new Date()
     if (d.getTime() - @timeUltimoClick)>1500 # 2s
       @clickOrdem = 1
       @popupOrZoom(a)
@@ -211,14 +211,14 @@ class ClusterCtr
       if m.slinfo
         cat = m.slinfo.cat
         if (cats[cat])
-          cats[cat].append(m)
+          cats[cat].push(m)
         else
           cats[cat]=[m]
 
     cats_ord =[]
-    for cat, i in dict.keys(cats)
-      cats_ord.append([cat,cats[cat]])
-    cats_ord.sort( (a,b) -> b[1].length-a[1].length)  
+    for cat, i in Object.keys(cats)
+      cats_ord.push([cat,cats[cat]])
+    cats_ord.sort( (a,b) -> b[1].length - a[1].length)  
     @clusters[cluster_id]=cats_ord
     return cats_ord
 
@@ -230,7 +230,7 @@ class ClusterCtr
       html+="<ul>"
       cat = cats_ord[0]
       for cat, i in cats_ord
-        html += "<li><a title='Focar no subgrupo "+cat[0]+"'  href='javascript:SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'>"+cat[0]+"</a> ("+cat[1].length+")</li>"
+        html += "<li><a title='Focar no subgrupo "+cat[0]+"'  href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\");return true;'>"+cat[0]+"</a> ("+cat[1].length+")</li>"
       html +="</ul>"
     else
       html+='<ul class="icones">'
@@ -238,8 +238,8 @@ class ClusterCtr
         cat_id = @sl.dados.categorias_id[cat[0]]
         iconUrl = @sl.Icones[cat_id].options.iconUrl
         html += "<li>"
-        html += "<p class='img'><a title='Focar no subgrupo "+cat[0]+"' href='javascript:SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'><img src='"+iconUrl+"'></a></p>"
-        html += "<p class='texto'><a title='Focar no subgrupo "+cat[0]+"' href='javascript:SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'>"+cat[1].length+"</a></p>"
+        html += "<p class='img'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'><img src='"+iconUrl+"'></a></p>"
+        html += "<p class='texto'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick=':SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'>"+cat[1].length+"</a></p>"
         html +="</li>"
       html +="</ul>"
 

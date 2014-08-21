@@ -21450,8 +21450,8 @@ L.MarkerClusterGroup.include({
       this.sl = sl;
       this.id_undozoom = "#" + this.sl.map_id + " div.searchlight-undozoom";
       html = "";
-      html += "<a class='undo' title='desfazer zoom em grupo' href='javascript:SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>";
-      html += "<a class='redo' title='refazer zoom em grupo' href='javascript:SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>";
+      html += "<a class='undo' title='desfazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>";
+      html += "<a class='redo' title='refazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>";
       html += "&nbsp;";
       $(this.id_undozoom).append(html);
       $(this.id_undozoom).hide();
@@ -21467,11 +21467,11 @@ L.MarkerClusterGroup.include({
       var center, zoom;
       zoom = this.sl.map.getZoom();
       center = this.sl.map.getCenter();
-      this.pilha.append([center, zoom]);
+      this.pilha.push([center, zoom]);
       this.last_undo = null;
       this.show_undo();
       this.hide_redo();
-      return this.undo_index = len(this.pilha) - 1;
+      return this.undo_index = this.pilha.length - 1;
     };
 
     PilhaDeZoom.prototype.desfazer = function() {
@@ -21480,10 +21480,10 @@ L.MarkerClusterGroup.include({
         z = this.sl.map.getZoom();
         c = this.sl.map.getCenter();
         this.last_undo = [c, z];
-        this.pilha.append(this.last_undo);
+        this.pilha.push(this.last_undo);
       }
-      if (this.undo_index === len(this.pilha) - 1) {
-        this.undo_index = len(this.pilha) - 2;
+      if (this.undo_index === (this.pilha.length - 1)) {
+        this.undo_index = this.pilha.length - 2;
       }
       _ref = this.pilha[this.undo_index], center = _ref[0], zoom = _ref[1];
       this.undo_index -= 1;
@@ -21502,7 +21502,7 @@ L.MarkerClusterGroup.include({
       _ref = this.pilha[this.undo_index + 1], center = _ref[0], zoom = _ref[1];
       this.undo_index += 1;
       this.sl.map.setView(center, zoom);
-      if (this.undo_index >= len(this.pilha) - 1) {
+      if (this.undo_index >= this.pilha.length - 1) {
         this.hide_redo();
       }
       return this.show_undo();
@@ -21553,7 +21553,7 @@ L.MarkerClusterGroup.include({
     };
 
     PilhaDeZoom.prototype.esta_vazia = function() {
-      return len(this.pilha) === 0;
+      return this.pilha.length === 0;
     };
 
     return PilhaDeZoom;
@@ -21578,10 +21578,10 @@ L.MarkerClusterGroup.include({
       this.registraEventosClusters = __bind(this.registraEventosClusters, this);
       this.sl = sl;
       this.criaPopup();
-      this.pilha_de_zoom = PilhaDeZoom(sl);
+      this.pilha_de_zoom = new PilhaDeZoom(this.sl);
       this.clusters = {};
       this.id_analise = "#" + this.sl.map_id + " div.searchlight-analise";
-      $(this.id_analise).append("<p class='center'><a href='javascript:SL(\"" + this.sl.map_id + "\").control.clusterCtr.desfocar()'>DESFOCAR</a></p>");
+      $(this.id_analise).append("<p class='center'><a href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.desfocar()'>DESFOCAR</a></p>");
       $(this.id_analise).hide();
       this.sl.map.on('dblclick', (function(_this) {
         return function(a) {
@@ -21611,7 +21611,7 @@ L.MarkerClusterGroup.include({
         })(this));
         this.sl.markers.on('clusterclick', (function(_this) {
           return function(a) {
-            if (dict.keys(_this.sl.dados.categorias).length > 1) {
+            if (Object.keys(_this.sl.dados.categorias).length > 1) {
               return _this.clusterClick(a);
             } else {
               return a.layer.zoomToBounds();
@@ -21626,7 +21626,7 @@ L.MarkerClusterGroup.include({
       var popup;
       popup = L.popup();
       this.popup = popup;
-      return this.timeUltimoClick = Date().getTime();
+      return this.timeUltimoClick = new Date().getTime();
     };
 
     ClusterCtr.prototype.clusterClick = function(a) {
@@ -21634,7 +21634,7 @@ L.MarkerClusterGroup.include({
       if (a == null) {
         a = null;
       }
-      d = Date();
+      d = new Date();
       if ((d.getTime() - this.timeUltimoClick) > 1500) {
         this.clickOrdem = 1;
         this.popupOrZoom(a);
@@ -21723,17 +21723,17 @@ L.MarkerClusterGroup.include({
         if (m.slinfo) {
           cat = m.slinfo.cat;
           if (cats[cat]) {
-            cats[cat].append(m);
+            cats[cat].push(m);
           } else {
             cats[cat] = [m];
           }
         }
       }
       cats_ord = [];
-      _ref1 = dict.keys(cats);
+      _ref1 = Object.keys(cats);
       for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
         cat = _ref1[i];
-        cats_ord.append([cat, cats[cat]]);
+        cats_ord.push([cat, cats[cat]]);
       }
       cats_ord.sort(function(a, b) {
         return b[1].length - a[1].length;
@@ -21751,7 +21751,7 @@ L.MarkerClusterGroup.include({
         cat = cats_ord[0];
         for (i = _i = 0, _len = cats_ord.length; _i < _len; i = ++_i) {
           cat = cats_ord[i];
-          html += "<li><a title='Focar no subgrupo " + cat[0] + "'  href='javascript:SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'>" + cat[0] + "</a> (" + cat[1].length + ")</li>";
+          html += "<li><a title='Focar no subgrupo " + cat[0] + "'  href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\");return true;'>" + cat[0] + "</a> (" + cat[1].length + ")</li>";
         }
         html += "</ul>";
       } else {
@@ -21761,8 +21761,8 @@ L.MarkerClusterGroup.include({
           cat_id = this.sl.dados.categorias_id[cat[0]];
           iconUrl = this.sl.Icones[cat_id].options.iconUrl;
           html += "<li>";
-          html += "<p class='img'><a title='Focar no subgrupo " + cat[0] + "' href='javascript:SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'><img src='" + iconUrl + "'></a></p>";
-          html += "<p class='texto'><a title='Focar no subgrupo " + cat[0] + "' href='javascript:SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'>" + cat[1].length + "</a></p>";
+          html += "<p class='img'><a title='Focar no subgrupo " + cat[0] + "' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'><img src='" + iconUrl + "'></a></p>";
+          html += "<p class='texto'><a title='Focar no subgrupo " + cat[0] + "' href='#' onclick=':SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'>" + cat[1].length + "</a></p>";
           html += "</li>";
         }
         html += "</ul>";
@@ -21923,7 +21923,7 @@ L.MarkerClusterGroup.include({
           return _this.markerClick(ev);
         };
       })(this));
-      this.clusterCtr = ClusterCtr(this.sl);
+      this.clusterCtr = new ClusterCtr(this.sl);
     }
 
     Controle.prototype.hide_opcoes = function(event) {
@@ -21987,7 +21987,7 @@ L.MarkerClusterGroup.include({
       for (m in marcadores) {
         mark = marcadores[m];
         if (mark.hasOwnProperty("slinfo")) {
-          marcadores_visiveis.append(mark);
+          marcadores_visiveis.push(mark);
         }
       }
       return marcadores_visiveis;
@@ -22019,7 +22019,7 @@ L.MarkerClusterGroup.include({
         ul = op + " ul";
         cats = [];
         for (k in this.sl.dados.categorias) {
-          cats.append([k, this.sl.dados.categorias[k].length]);
+          cats.push([k, this.sl.dados.categorias[k].length]);
         }
         cats.sort(function(a, b) {
           return b[1] - a[1];
@@ -22096,9 +22096,9 @@ L.MarkerClusterGroup.include({
     Dados.prototype.addItem = function(i, func_convert) {
       var cat, geoItem, m;
       geoItem = func_convert(i);
-      m = Marcador(geoItem);
+      m = new Marcador(geoItem);
       cat = this.getCat(m);
-      return cat.append(m);
+      return cat.push(m);
     };
 
     Dados.prototype.getCatLatLng = function(name) {
@@ -22107,7 +22107,7 @@ L.MarkerClusterGroup.include({
       _ref = this.categorias[name];
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         m = _ref[i];
-        v.append(m.getMark().getLatLng());
+        v.push(m.getMark().getLatLng());
       }
       return v;
     };
@@ -22125,7 +22125,7 @@ L.MarkerClusterGroup.include({
 
     Dados.prototype.addMarkersTo = function(cluster) {
       var i, k, _i, _len, _ref, _results;
-      _ref = dict.keys(this.categorias);
+      _ref = Object.keys(this.categorias);
       _results = [];
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         k = _ref[i];
@@ -22336,6 +22336,7 @@ L.MarkerClusterGroup.include({
         }
       } catch (_error) {
         e = _error;
+        console.log(e);
         this.markers.fire("data:loaded");
         alert("Não foi possivel carregar os dados do mapa. Verifique se a fonte de dados está formatada corretamente.");
         return;
