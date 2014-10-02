@@ -35,21 +35,63 @@ Icones["12"] = new L.icon({ iconUrl:"images/pin_12.png",iconSize:     [45, 58], 
         //item_convertido.icon = Icones[item_convertido.cat_id]
         return item_convertido 
     } 
+
 function portoalegre_cc(map_id="map"){
    
     conf = {
-        'url':pacc_jsonp,
+        'url':'',
         'convert':convert_item_porto,
        // 'icones':Icones,
         'map_id':map_id
         }   
     mps2 = new Searchlight(conf)
 }
+ function convert_item_pac(item){
+        item_convertido = {}
+        //console.log('1');
+        //console.log(item_convertido);
+        if ((item.val_lat.length > 0) && (item.val_long.length > 0)){
+        latlog = dms2decPTBR(item.val_lat,item.val_long)
+        //if (isNaN(latlog[0]) || isNaN(latlog[1])){
+        //    return null;
+      //  }
+        item_convertido.longitude = ""+latlog[1]
+        item_convertido.latitude = "" +latlog[0]
+        item_convertido.texto = item.dsc_titulo
+        item_convertido.cat = item.idn_estagio+"%";
+         }else{
+             return null;
+             }
+        //console.log(item_convertido);
+        //item_convertido.cat = item.cause.category_name
+        //item_convertido.icon = Icones[item_convertido.cat_id]
+        return item_convertido 
+    } 
+
+function pac_cc(map_id="map"){
+   
+    conf = {
+        'url':'http://localhost/sl/PAC_2014_04.csv',
+        'convert':convert_item_pac,
+       // 'icones':Icones,
+        'map_id':map_id
+        }   
+    mps2 = new Searchlight(conf)
+}
+
+
+
+
+
+
+
+
 
 $(document).ready(function(){
    console.log('ready') 
   // main()
-   portoalegre_cc();
+   //portoalegre_cc();
+   pac_cc();
     });
 </script>
 </body>

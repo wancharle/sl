@@ -24,7 +24,7 @@ window.main= () ->
     mps = new Searchlight()
     window.onSLcarregaDados= (sl) ->
       sl.autoZoom()
-    
+L.Icon.Default.imagePath = "/sl/images/leaflet";    
 sl_IconCluster = new L.DivIcon({ html: '<div><span>1</span></div>', className: 'marker-cluster marker-cluster-small', iconSize: new L.Point(40, 40) });
 sl_IconePadrao = new L.Icon.Default()
 
@@ -86,9 +86,21 @@ class Searchlight
       , 'simpleSheet': true } )
     else
       if @url.slice(0,4)=="http"
-        getJSONP(@url, (data)=>
-            @carregaDados(data)
-        )
+        if @url.slice(-4)==".csv"
+          console.log('inicio')
+          Papa.parse(@url, {
+            header:true,
+            download: true,
+            complete: (results, file) =>
+              console.log('inicio2');
+              @carregaDados(results['data'])
+            })
+
+          console.log('inicio3')
+        else
+          getJSONP(@url, (data)=>
+              @carregaDados(data)
+          )
       else
         getJSON(@url, (data) =>
           @carregaDados(data)
@@ -113,7 +125,7 @@ class Searchlight
       @markers.fire("data:loaded")
       alert("Não foi possivel carregar os dados do mapa. Verifique se a fonte de dados está formatada corretamente.")
       return
-
+    console.log('dados carregados');
     @markers.clearLayers()
     @dados.addMarkersTo(@markers)
     

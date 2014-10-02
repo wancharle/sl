@@ -8,25 +8,27 @@ $("<link/>", {
    rel: "stylesheet",
    type: "text/css",
    href: "http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"
+   #href: scriptFolder+ "./bower_components/leaflet/dist/leaflet.css"
+
 }).appendTo("head")
 
 $("<link/>", {
    rel: "stylesheet",
    type: "text/css",
-   href: scriptFolder+"../js/markercluster/MarkerCluster.css"
+   href: scriptFolder+"./js/markercluster/MarkerCluster.css"
 }).appendTo("head")
 
 $("<link/>", {
    rel: "stylesheet",
    type: "text/css",
-   href: scriptFolder+"../js/markercluster/MarkerCluster.Default.css"
+   href: scriptFolder+"./js/markercluster/MarkerCluster.Default.css"
 }).appendTo("head")
 
 
 $("<link/>", {
    rel: "stylesheet",
    type: "text/css",
-   href: scriptFolder+"../css/searchlight.css"
+   href: scriptFolder+"./css/searchlight.css"
 }).appendTo("head")
 
 

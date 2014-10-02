@@ -18,9 +18,10 @@ class Dados
 
   addItem : (i,func_convert) =>
     geoItem = func_convert(i)
-    m =  new Marcador(geoItem)
-    cat = @getCat(m)
-    cat.push(m)
+    if geoItem
+      m =  new Marcador(geoItem)
+      cat = @getCat(m)
+      cat.push(m)
 
   getCatLatLng: (name) =>
       v = []

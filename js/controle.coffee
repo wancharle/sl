@@ -87,8 +87,8 @@ class Controle
       if @sl.esconder_icones
           if m.slinfo.ultimo_zoom
               @sl.map.setView(m.slinfo.ultimo_center,m.slinfo.ultimo_zoom)
-              m.slinfo.ultimo_zoom = None 
-              m.slinfo.ultimo_center = None
+              m.slinfo.ultimo_zoom = null 
+              m.slinfo.ultimo_center = null
               @sl.map.closePopup()
           else
               m.slinfo.ultimo_zoom = @sl.map.getZoom()
