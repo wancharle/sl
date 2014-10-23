@@ -1,13 +1,15 @@
 class Dados
-  constructor: () ->
+  constructor: ->
     @clear()
 
-  clear: () =>
+  clear: =>
     @marcadores = []
     @categorias = {}
     @categorias_id = {}
 
-  getCat: (m)=>
+  getCatByName: (cat_name)-> @categorias[cat_name]
+
+  _getCatOrCreate: (m)=>
     cat=@categorias[m.cat]
     if cat
       return cat
@@ -20,7 +22,7 @@ class Dados
     geoItem = func_convert(i)
     if geoItem
       m =  new Marcador(geoItem)
-      cat = @getCat(m)
+      cat = @_getCatOrCreate(m)
       cat.push(m)
 
   getCatLatLng: (name) =>
@@ -30,11 +32,15 @@ class Dados
       return v
 
   catAddMarkers:(name,cluster) =>
-    for m, i in @categorias[name]
+    for m in @getCatByName(name)
       cluster.addLayer(m.getMark())
 
+  
   addMarkersTo: (cluster) =>
-    for k, i in Object.keys(@categorias)
-      @catAddMarkers(k,cluster)
+    for cat in @getCategorias() #Object.keys(@categorias)
+      @catAddMarkers(cat,cluster)
+
+  getCategorias: ->
+    return (cat for cat in Object.keys(@categorias))
 
 # vim: set ts=2 sw=2 sts=2 expandtab:

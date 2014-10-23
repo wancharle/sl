@@ -39,7 +39,11 @@ class Searchlight
 
   constructor: (opcoes={}) ->
     d = new Dicionario(opcoes)
-    @map_id =  d.get('map_id','map')
+    @container_id =  d.get('container_id','map')
+    @tab_id = "tab-"+ @container_id
+    @map_id = "map-"+ @container_id
+    @lista_id = "lista-"+ @container_id
+    @opcoes_id = "opcoes-"+ @container_id
     sl_referencias[@map_id]  = this 
 
     @Icones =  d.get('icones', null)
@@ -58,10 +62,22 @@ class Searchlight
     @create()
     
     @dados = new Dados()
+    @tabList = new TabList(@lista_id,@dados)
     @get_data()
-      
+
 
   create: () =>
+    # criando container:
+    $("##{@container_id}").append("<ul class='nav nav-tabs' role='tablist'>
+    <li class='active'><a data-toggle='tab' href='##{@tab_id}'>Mapa</a></li>
+    <li><a data-toggle='tab' href='#tab-#{@lista_id}'>Lista</a></li>
+    <li><a data-toggle='tab' href='#tab-#{@opcoes_id}'>Opções</a></li>
+    </ul>
+    <div class='tab-content'>
+      <div class='tab-pane active' id='#{@tab_id}'><div id='#{@map_id}' > </div> </div>
+      <div class='tab-pane' id='tab-#{@lista_id}' ><div id='#{@lista_id}'> </div> </div>
+      <div class='tab-pane' id='tab-#{@opcoes_id}' > </div>
+    </div> ")
     @CamadaBasica = L.tileLayer(@urlosm,  { 'attribution': attribution, 'maxZoom': 18 })
     @map = L.map(@map_id, {layers:[@CamadaBasica],'center': SENADO_FEDERAL,'zoom': 13}) #TODO: mudar centro e zoom 
     
@@ -74,7 +90,8 @@ class Searchlight
    
     # criando classe para controlar o mapa
     @control = new  Controle(this)
-  
+    
+      
   get_data: () =>
     obj = this
     @markers.fire("data:loading")
@@ -136,6 +153,7 @@ class Searchlight
       @carregando = true
 
     @control.addCatsToControl(@map_id)
+    @tabList.load()
     @markers.fire("data:loaded")
     @control.atualizarIconesMarcVisiveis()
 

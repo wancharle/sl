@@ -15,6 +15,15 @@ $("<link/>", {
 $("<link/>", {
    rel: "stylesheet",
    type: "text/css",
+   href: "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"
+
+}).appendTo("head")
+
+
+
+$("<link/>", {
+   rel: "stylesheet",
+   type: "text/css",
    href: scriptFolder+"./js/markercluster/MarkerCluster.css"
 }).appendTo("head")
 
