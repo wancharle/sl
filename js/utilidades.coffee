@@ -25,4 +25,37 @@ class Dicionario
       return value
 
 
+class Popup
+  constructor: (container_id) ->
+    @container_id = container_id
+    @id = "popup-#{container_id}" 
+    corpo="<div id=\"#{@id}\" class=\"modal fade\" data-role='dialog'>"
+    corpo+=' <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title"></h4>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>'
+
+    $("body").append(corpo)
+
+  show: ->
+    $("##{@id}").modal('show')
+
+  setTitle: (title) ->
+    $("##{@id} h4.modal-title").html(title)
+
+  setBody: (body) ->
+    $("##{@id} div.modal-body").html(body)
+
+
+    
+
 # vim: set ts=2 sw=2 sts=2 expandtab:

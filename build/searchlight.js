@@ -24937,7 +24937,7 @@ L.MarkerClusterGroup.include({
 
 }(window, document));
 (function() {
-  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, SENADO_FEDERAL, Searchlight, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_IconCluster, sl_IconePadrao, sl_referencias, thisScriptEl,
+  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, Popup, SENADO_FEDERAL, Searchlight, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_IconCluster, sl_IconePadrao, sl_referencias, thisScriptEl,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -25673,26 +25673,45 @@ L.MarkerClusterGroup.include({
   })();
 
   TabList = (function() {
-    function TabList(lista_id, dados) {
+    function TabList(lista_id, sl) {
+      this.sl = sl;
+      this.popup = this.sl.bsPopup;
       this.lista_id = lista_id;
-      this.dados = dados;
+      this.dados = sl.dados;
+      if (!window.SLTabList) {
+        window.SLTabList = {};
+      }
+      window.SLTabList[lista_id] = this;
     }
 
+    TabList.prototype._instancia = function() {
+      return "window.SLTabList[\"" + this.lista_id + "\"]";
+    };
+
     TabList.prototype.load = function() {
-      var cat_name, html, obj, _i, _j, _len, _len1, _ref, _ref1;
+      var cat_name, html, i, obj, _i, _j, _len, _len1, _ref, _ref1;
       html = '<table class="table">';
       _ref = this.dados.getCategorias();
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         cat_name = _ref[_i];
         _ref1 = this.dados.getCatByName(cat_name);
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          obj = _ref1[_j];
-          html = "" + html + "<tr><td>" + obj.texto + "</td><td>" + cat_name + "</td></tr>";
+        for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
+          obj = _ref1[i];
+          html = "" + html + "<tr><td><a href=\"javascript:void(0);\" onclick='javascript:" + (this._instancia()) + ".open(" + i + ",\"" + cat_name + "\");false;'> " + cat_name + "</a></td><td>" + obj.texto + "</td></tr>";
         }
       }
       html = "" + html + "</table>";
       $("#" + this.lista_id).html(html);
-      return console.log('ok');
+      return console.log('TabList carragado');
+    };
+
+    TabList.prototype.open = function(i, cat_name) {
+      var obj;
+      obj = this.dados.getCatByName(cat_name)[i];
+      this.popup.setTitle(obj.cat);
+      this.popup.setBody(obj.texto);
+      this.popup.show();
+      return false;
     };
 
     return TabList;
@@ -25824,12 +25843,13 @@ L.MarkerClusterGroup.include({
       this.func_convert = d.get('convert', func);
       this.create();
       this.dados = new Dados();
-      this.tabList = new TabList(this.lista_id, this.dados);
+      this.tabList = new TabList(this.lista_id, this);
       this.get_data();
     }
 
     Searchlight.prototype.create = function() {
       $("#" + this.container_id).append("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.opcoes_id + "'>Opções</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.tab_id + "'><div id='" + this.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.lista_id + "' ><div id='" + this.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.opcoes_id + "' > </div> </div> ");
+      this.bsPopup = new Popup(this.container_id);
       this.CamadaBasica = L.tileLayer(this.urlosm, {
         'attribution': attribution,
         'maxZoom': 18
@@ -25867,18 +25887,15 @@ L.MarkerClusterGroup.include({
       } else {
         if (this.url.slice(0, 4) === "http") {
           if (this.url.slice(-4) === ".csv") {
-            console.log('inicio');
-            Papa.parse(this.url, {
+            return Papa.parse(this.url, {
               header: true,
               download: true,
               complete: (function(_this) {
                 return function(results, file) {
-                  console.log('inicio2');
                   return _this.carregaDados(results['data']);
                 };
               })(this)
             });
-            return console.log('inicio3');
           } else {
             return getJSONP(this.url, (function(_this) {
               return function(data) {
@@ -25939,8 +25956,9 @@ L.MarkerClusterGroup.include({
       this.markers.fire("data:loaded");
       this.control.atualizarIconesMarcVisiveis();
       if (this.carregando === false && window['onSLcarregaDados'] !== void 0) {
-        return onSLcarregaDados(this);
+        onSLcarregaDados(this);
       }
+      return this.autoZoom();
     };
 
     Searchlight.prototype.addItem = function(item) {
@@ -26008,6 +26026,32 @@ L.MarkerClusterGroup.include({
     };
 
     return Dicionario;
+
+  })();
+
+  Popup = (function() {
+    function Popup(container_id) {
+      var corpo;
+      this.container_id = container_id;
+      this.id = "popup-" + container_id;
+      corpo = "<div id=\"" + this.id + "\" class=\"modal fade\" data-role='dialog'>";
+      corpo += ' <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title"></h4> </div> <div class="modal-body"> </div> <div class="modal-footer"> <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button> </div> </div><!-- /.modal-content --> </div><!-- /.modal-dialog --> </div>';
+      $("body").append(corpo);
+    }
+
+    Popup.prototype.show = function() {
+      return $("#" + this.id).modal('show');
+    };
+
+    Popup.prototype.setTitle = function(title) {
+      return $("#" + this.id + " h4.modal-title").html(title);
+    };
+
+    Popup.prototype.setBody = function(body) {
+      return $("#" + this.id + " div.modal-body").html(body);
+    };
+
+    return Popup;
 
   })();
 

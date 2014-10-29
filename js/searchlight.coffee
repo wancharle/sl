@@ -62,7 +62,7 @@ class Searchlight
     @create()
     
     @dados = new Dados()
-    @tabList = new TabList(@lista_id,@dados)
+    @tabList = new TabList(@lista_id,this)
     @get_data()
 
 
@@ -78,6 +78,8 @@ class Searchlight
       <div class='tab-pane' id='tab-#{@lista_id}' ><div id='#{@lista_id}'> </div> </div>
       <div class='tab-pane' id='tab-#{@opcoes_id}' > </div>
     </div> ")
+    @bsPopup = new Popup(@container_id)
+
     @CamadaBasica = L.tileLayer(@urlosm,  { 'attribution': attribution, 'maxZoom': 18 })
     @map = L.map(@map_id, {layers:[@CamadaBasica],'center': SENADO_FEDERAL,'zoom': 13}) #TODO: mudar centro e zoom 
     
@@ -104,16 +106,13 @@ class Searchlight
     else
       if @url.slice(0,4)=="http"
         if @url.slice(-4)==".csv"
-          console.log('inicio')
           Papa.parse(@url, {
             header:true,
             download: true,
             complete: (results, file) =>
-              console.log('inicio2');
               @carregaDados(results['data'])
             })
 
-          console.log('inicio3')
         else
           getJSONP(@url, (data)=>
               @carregaDados(data)
@@ -159,6 +158,8 @@ class Searchlight
 
     if @carregando == false and window['onSLcarregaDados'] != undefined
       onSLcarregaDados(this)
+    # ao terminar de carregar faz zoom automatico sobre area dos dados.
+    @autoZoom() 
       
   addItem: (item) =>
     @dados.addItem(item,@func_convert)
