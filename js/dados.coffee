@@ -1,5 +1,6 @@
 class Dados
-  constructor: ->
+  constructor: (sl)->
+    @sl = sl
     @clear()
 
   clear: =>
@@ -21,7 +22,7 @@ class Dados
   addItem : (i,func_convert) =>
     geoItem = func_convert(i)
     if geoItem
-      m =  new Marcador(geoItem)
+      m =  new Marcador(geoItem,@sl.getIS())
       cat = @_getCatOrCreate(m)
       cat.push(m)
 

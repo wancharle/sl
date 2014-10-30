@@ -25,8 +25,8 @@ window.main= () ->
     window.onSLcarregaDados= (sl) ->
       sl.autoZoom()
 L.Icon.Default.imagePath = "/sl/images/leaflet";    
-sl_IconCluster = new L.DivIcon({ html: '<div><span>1</span></div>', className: 'marker-cluster marker-cluster-small', iconSize: new L.Point(40, 40) });
-sl_IconePadrao = new L.Icon.Default()
+window.SL_ICON_CLUSTER = new L.DivIcon({ html: '<div><span>1</span></div>', className: 'marker-cluster marker-cluster-small', iconSize: [40,40],popupAnchor:[0,-35]});
+window.SL_ICON_PADRAO = new L.Icon.Default()
 
 # referencia para callback
 referencia_atual = null
@@ -49,6 +49,8 @@ class Searchlight
     @Icones =  d.get('icones', null)
     @esconder_icones =  d.get('esconder_icones', true)
     @clusterizar =  d.get('clusterizar', true)
+    @useBsPopup = d.get('useBsPopup', true)
+
 
     @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
     @url =  d.get('url', null)
@@ -61,11 +63,12 @@ class Searchlight
 
     @create()
     
-    @dados = new Dados()
+    @dados = new Dados(this)
     @tabList = new TabList(@lista_id,this)
     @get_data()
 
-
+  getIS: =>  # retorna a string da instancia
+    return "SL(\"#{@map_id}\")" 
   create: () =>
     # criando container:
     $("##{@container_id}").append("<ul class='nav nav-tabs' role='tablist'>
@@ -78,7 +81,7 @@ class Searchlight
       <div class='tab-pane' id='tab-#{@lista_id}' ><div id='#{@lista_id}'> </div> </div>
       <div class='tab-pane' id='tab-#{@opcoes_id}' > </div>
     </div> ")
-    @bsPopup = new Popup(@container_id)
+    @bsPopup = new Popup(this,@container_id)
 
     @CamadaBasica = L.tileLayer(@urlosm,  { 'attribution': attribution, 'maxZoom': 18 })
     @map = L.map(@map_id, {layers:[@CamadaBasica],'center': SENADO_FEDERAL,'zoom': 13}) #TODO: mudar centro e zoom 

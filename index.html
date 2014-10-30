@@ -8,8 +8,8 @@
 </style>
 <body>
 
-<div id="pac"> </div>
 <div id="porto"> </div>
+<div id="pac"> </div>
 <div id="google"> </div>
 <script>
 portoalegrecc_json = "http://portoalegre.cc/causes/visibles?topLeftY=-29.993308319952344&topLeftX=-51.07286486145017&bottomRightY=-30.127023880027313&bottomRightX=-51.33413347717283&currentZoom=1&maxZoom=6"
@@ -91,7 +91,7 @@ function pac_cc(map_id="map"){
 
 
 function gdocs(){
-    mps = new Searchlight({'url':google_docs,'container_id':'google'});
+    mps = new Searchlight({'useBsPopup':false,'esconder_icones':false,'url':google_docs,'container_id':'google'});
 }
 
 $(document).ready(function(){

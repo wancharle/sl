@@ -24937,134 +24937,46 @@ L.MarkerClusterGroup.include({
 
 }(window, document));
 (function() {
-  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, Popup, SENADO_FEDERAL, Searchlight, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_IconCluster, sl_IconePadrao, sl_referencias, thisScriptEl,
+  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, Popup, SENADO_FEDERAL, Searchlight, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-  PilhaDeZoom = (function() {
-    function PilhaDeZoom(sl) {
-      this.esta_vazia = __bind(this.esta_vazia, this);
-      this.hide_redo = __bind(this.hide_redo, this);
-      this.hide_undo = __bind(this.hide_undo, this);
-      this.show_redo = __bind(this.show_redo, this);
-      this.show_undo = __bind(this.show_undo, this);
-      this.hide = __bind(this.hide, this);
-      this.show = __bind(this.show, this);
-      this.refazer = __bind(this.refazer, this);
-      this.desfazer = __bind(this.desfazer, this);
-      this.salva_zoom = __bind(this.salva_zoom, this);
-      var html;
-      this.pilha = [];
+  Popup = (function() {
+    function Popup(sl, container_id) {
+      var corpo;
       this.sl = sl;
-      this.id_undozoom = "#" + this.sl.map_id + " div.searchlight-undozoom";
-      html = "";
-      html += "<a class='undo' title='desfazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>";
-      html += "<a class='redo' title='refazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>";
-      html += "&nbsp;";
-      $(this.id_undozoom).append(html);
-      $(this.id_undozoom).hide();
-      this.undo_visivel = false;
-      this.redo_visivel = false;
-      this.undozoom_visivel = false;
-      this.undo_index = 0;
-      this.redo_index = 0;
-      this.last_undo = null;
+      this.container_id = container_id;
+      this.id = "popup-" + container_id;
+      corpo = "<div id=\"" + this.id + "\" class=\"modal fade\" data-role='dialog'>";
+      corpo += ' <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title"></h4> </div> <div class="modal-body"> </div> <div class="modal-footer"> <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button> </div> </div><!-- /.modal-content --> </div><!-- /.modal-dialog --> </div>';
+      $("body").prepend(corpo);
     }
 
-    PilhaDeZoom.prototype.salva_zoom = function() {
-      var center, zoom;
-      zoom = this.sl.map.getZoom();
-      center = this.sl.map.getCenter();
-      this.pilha.push([center, zoom]);
-      this.last_undo = null;
-      this.show_undo();
-      this.hide_redo();
-      return this.undo_index = this.pilha.length - 1;
+    Popup.prototype.show = function() {
+      return $("#" + this.id).modal('show');
     };
 
-    PilhaDeZoom.prototype.desfazer = function() {
-      var c, center, z, zoom, _ref;
-      if (!this.last_undo) {
-        z = this.sl.map.getZoom();
-        c = this.sl.map.getCenter();
-        this.last_undo = [c, z];
-        this.pilha.push(this.last_undo);
-      }
-      if (this.undo_index === (this.pilha.length - 1)) {
-        this.undo_index = this.pilha.length - 2;
-      }
-      _ref = this.pilha[this.undo_index], center = _ref[0], zoom = _ref[1];
-      this.undo_index -= 1;
-      if (this.undo_index < 0) {
-        this.hide_undo();
-      }
-      this.show_redo();
-      return this.sl.map.setView(center, zoom);
+    Popup.prototype.close = function() {
+      return $("#" + this.id).modal('hide');
     };
 
-    PilhaDeZoom.prototype.refazer = function() {
-      var center, zoom, _ref;
-      if (this.undo_index < 0) {
-        this.undo_index = 0;
-      }
-      _ref = this.pilha[this.undo_index + 1], center = _ref[0], zoom = _ref[1];
-      this.undo_index += 1;
-      this.sl.map.setView(center, zoom);
-      if (this.undo_index >= this.pilha.length - 1) {
-        this.hide_redo();
-      }
-      return this.show_undo();
+    Popup.prototype.setTitle = function(title) {
+      return $("#" + this.id + " h4.modal-title").html(title);
     };
 
-    PilhaDeZoom.prototype.show = function() {
-      if (!this.undozoom_visivel) {
-        $(this.id_undozoom).show();
-        this.undozoom_visivel = true;
-      }
-      if (!this.undo_visivel) {
-        this.hide_undo();
-      }
-      if (!this.redo_visivel) {
-        return this.hide_redo();
-      }
+    Popup.prototype.setBody = function(body) {
+      return $("#" + this.id + " div.modal-body").html(body);
     };
 
-    PilhaDeZoom.prototype.hide = function() {
-      if (!this.undo_visivel && !this.redo_visivel) {
-        $(this.id_undozoom).hide();
-        return this.undozoom_visivel = false;
-      }
+    Popup.prototype.showMarcador = function() {
+      var m;
+      m = this.sl.control.marcador_clicado;
+      this.setTitle(m.slinfo.texto);
+      this.setBody(m.slinfo.texto);
+      return this.show();
     };
 
-    PilhaDeZoom.prototype.show_undo = function() {
-      this.undo_visivel = true;
-      this.show();
-      return $(this.id_undozoom + " a.undo").show();
-    };
-
-    PilhaDeZoom.prototype.show_redo = function() {
-      this.redo_visivel = true;
-      this.show();
-      return $(this.id_undozoom + " a.redo").show();
-    };
-
-    PilhaDeZoom.prototype.hide_undo = function() {
-      $(this.id_undozoom + " a.undo").hide();
-      this.undo_visivel = false;
-      return this.hide();
-    };
-
-    PilhaDeZoom.prototype.hide_redo = function() {
-      $(this.id_undozoom + " a.redo").hide();
-      this.redo_visivel = false;
-      return this.hide();
-    };
-
-    PilhaDeZoom.prototype.esta_vazia = function() {
-      return this.pilha.length === 0;
-    };
-
-    return PilhaDeZoom;
+    return Popup;
 
   })();
 
@@ -25082,6 +24994,7 @@ L.MarkerClusterGroup.include({
       this.zoomGrupo = __bind(this.zoomGrupo, this);
       this.clusterDuploClick = __bind(this.clusterDuploClick, this);
       this.clusterClick = __bind(this.clusterClick, this);
+      this.closePopup = __bind(this.closePopup, this);
       this.criaPopup = __bind(this.criaPopup, this);
       this.registraEventosClusters = __bind(this.registraEventosClusters, this);
       this.sl = sl;
@@ -25089,7 +25002,7 @@ L.MarkerClusterGroup.include({
       this.pilha_de_zoom = new PilhaDeZoom(this.sl);
       this.clusters = {};
       this.id_analise = "#" + this.sl.map_id + " div.searchlight-analise";
-      $(this.id_analise).append("<p class='center'><a href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.desfocar()'>DESFOCAR</a></p>");
+      $(this.id_analise).append("<p class='center'><a href='#' onclick='" + (this.sl.getIS()) + ".control.clusterCtr.desfocar()'>DESFOCAR</a></p>");
       $(this.id_analise).hide();
       this.sl.map.on('dblclick', (function(_this) {
         return function(a) {
@@ -25137,6 +25050,11 @@ L.MarkerClusterGroup.include({
       return this.timeUltimoClick = new Date().getTime();
     };
 
+    ClusterCtr.prototype.closePopup = function() {
+      this.sl.map.closePopup();
+      return this.sl.bsPopup.close();
+    };
+
     ClusterCtr.prototype.clusterClick = function(a) {
       var d;
       if (a == null) {
@@ -25155,7 +25073,7 @@ L.MarkerClusterGroup.include({
     };
 
     ClusterCtr.prototype.zoomGrupo = function() {
-      this.sl.map.closePopup();
+      this.closePopup();
       this.pilha_de_zoom.salva_zoom();
       return this.cluster_clicado.layer.zoomToBounds();
     };
@@ -25167,7 +25085,11 @@ L.MarkerClusterGroup.include({
 
     ClusterCtr.prototype.mostraPopup = function() {
       this.atualizaPopup();
-      return this.popup.openOn(this.sl.map);
+      if (this.sl.useBsPopup) {
+        return this.sl.bsPopup.show();
+      } else {
+        return this.popup.openOn(this.sl.map);
+      }
     };
 
     ClusterCtr.prototype.showPopup = function() {
@@ -25178,7 +25100,7 @@ L.MarkerClusterGroup.include({
     };
 
     ClusterCtr.prototype.desfocar = function() {
-      this.sl.map.closePopup();
+      this.closePopup();
       $(this.id_analise).hide();
       this.sl.map.removeLayer(this.camadaAnalise);
       this.sl.mostrarCamadaMarkers();
@@ -25210,7 +25132,8 @@ L.MarkerClusterGroup.include({
       this.camadaAnalise.fire("data:loaded");
       this.sl.control.registraEventosCamadaAnalise();
       this.registraEventosClusters();
-      return $(this.id_analise).show();
+      $(this.id_analise).show();
+      return this.closePopup();
     };
 
     ClusterCtr.prototype.update = function() {
@@ -25277,7 +25200,12 @@ L.MarkerClusterGroup.include({
       }
       html += "<p class='center'><input type='button' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.zoomGrupo();' value='expandir grupo' /></p>";
       html += "</div>";
-      return this.popup.setContent(html);
+      if (this.sl.useBsPopup) {
+        this.sl.bsPopup.setTitle("Dados sobre este do grupo");
+        return this.sl.bsPopup.setBody(html);
+      } else {
+        return this.popup.setContent(html);
+      }
     };
 
     ClusterCtr.prototype.popupOrZoom = function(cluster) {
@@ -25480,12 +25408,12 @@ L.MarkerClusterGroup.include({
     };
 
     Controle.prototype.esconderIconesMarcVisiveis = function() {
-      var m, _i, _len, _ref, _results;
-      _ref = this.getMarcadoresVisiveis();
+      var i, m, markers, _i, _len, _results;
+      markers = this.getMarcadoresVisiveis();
       _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        m = _ref[_i];
-        _results.push(m.setIcon(sl_IconCluster));
+      for (i = _i = 0, _len = markers.length; _i < _len; i = ++_i) {
+        m = markers[i];
+        _results.push(m.setIcon(window.SL_ICON_CLUSTER));
       }
       return _results;
     };
@@ -25493,9 +25421,9 @@ L.MarkerClusterGroup.include({
     Controle.prototype.getMarcadoresVisiveis = function() {
       var m, marcadores, marcadores_visiveis, mark;
       if (this.clusterCtr.camadaAnalise) {
-        marcadores = this.clusterCtr.camadaAnalise._layers;
+        marcadores = this.clusterCtr.camadaAnalise.getLayers();
       } else {
-        marcadores = this.sl.markers._layers;
+        marcadores = this.sl.markers.getLayers();
       }
       marcadores_visiveis = [];
       for (m in marcadores) {
@@ -25579,13 +25507,14 @@ L.MarkerClusterGroup.include({
   })();
 
   Dados = (function() {
-    function Dados() {
+    function Dados(sl) {
       this.addMarkersTo = __bind(this.addMarkersTo, this);
       this.catAddMarkers = __bind(this.catAddMarkers, this);
       this.getCatLatLng = __bind(this.getCatLatLng, this);
       this.addItem = __bind(this.addItem, this);
       this._getCatOrCreate = __bind(this._getCatOrCreate, this);
       this.clear = __bind(this.clear, this);
+      this.sl = sl;
       this.clear();
     }
 
@@ -25615,7 +25544,7 @@ L.MarkerClusterGroup.include({
       var cat, geoItem, m;
       geoItem = func_convert(i);
       if (geoItem) {
-        m = new Marcador(geoItem);
+        m = new Marcador(geoItem, this.sl.getIS());
         cat = this._getCatOrCreate(m);
         return cat.push(m);
       }
@@ -25719,16 +25648,17 @@ L.MarkerClusterGroup.include({
   })();
 
   Marcador = (function() {
-    function Marcador(geoItem) {
+    function Marcador(geoItem, instanceString) {
       this.getMark = __bind(this.getMark, this);
       this.m = null;
+      this.instanceString = instanceString;
       this.latitude = parseFloat(geoItem.latitude.replace(',', '.'));
       this.longitude = parseFloat(geoItem.longitude.replace(',', '.'));
       this.texto = geoItem.texto;
       if (geoItem.icon) {
         this.icon = geoItem.icon;
       } else {
-        this.icon = sl_IconePadrao;
+        this.icon = window.SL_ICON_PADRAO;
       }
       if (geoItem.cat) {
         this.cat_id = geoItem.cat_id;
@@ -25740,14 +25670,15 @@ L.MarkerClusterGroup.include({
     }
 
     Marcador.prototype.getMark = function() {
-      var m, p;
+      var html, m, p;
       if (this.m === null) {
         p = [this.latitude, this.longitude];
         m = new L.Marker(p);
         m.setIcon(this.icon);
         this.m = m;
         this.m.slinfo = this;
-        this.m.bindPopup(m.slinfo.texto, {
+        html = "" + m.slinfo.texto + "<p><a href='javascript:void(0);' onclick='" + this.instanceString + ".bsPopup.showMarcador()'>ver mais</a></p>";
+        this.m.bindPopup(html, {
           'maxWidth': 640
         });
       }
@@ -25755,6 +25686,133 @@ L.MarkerClusterGroup.include({
     };
 
     return Marcador;
+
+  })();
+
+  PilhaDeZoom = (function() {
+    function PilhaDeZoom(sl) {
+      this.esta_vazia = __bind(this.esta_vazia, this);
+      this.hide_redo = __bind(this.hide_redo, this);
+      this.hide_undo = __bind(this.hide_undo, this);
+      this.show_redo = __bind(this.show_redo, this);
+      this.show_undo = __bind(this.show_undo, this);
+      this.hide = __bind(this.hide, this);
+      this.show = __bind(this.show, this);
+      this.refazer = __bind(this.refazer, this);
+      this.desfazer = __bind(this.desfazer, this);
+      this.salva_zoom = __bind(this.salva_zoom, this);
+      var html;
+      this.pilha = [];
+      this.sl = sl;
+      this.id_undozoom = "#" + this.sl.map_id + " div.searchlight-undozoom";
+      html = "";
+      html += "<a class='undo' title='desfazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>";
+      html += "<a class='redo' title='refazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>";
+      html += "&nbsp;";
+      $(this.id_undozoom).append(html);
+      $(this.id_undozoom).hide();
+      this.undo_visivel = false;
+      this.redo_visivel = false;
+      this.undozoom_visivel = false;
+      this.undo_index = 0;
+      this.redo_index = 0;
+      this.last_undo = null;
+    }
+
+    PilhaDeZoom.prototype.salva_zoom = function() {
+      var center, zoom;
+      zoom = this.sl.map.getZoom();
+      center = this.sl.map.getCenter();
+      this.pilha.push([center, zoom]);
+      this.last_undo = null;
+      this.show_undo();
+      this.hide_redo();
+      return this.undo_index = this.pilha.length - 1;
+    };
+
+    PilhaDeZoom.prototype.desfazer = function() {
+      var c, center, z, zoom, _ref;
+      if (!this.last_undo) {
+        z = this.sl.map.getZoom();
+        c = this.sl.map.getCenter();
+        this.last_undo = [c, z];
+        this.pilha.push(this.last_undo);
+      }
+      if (this.undo_index === (this.pilha.length - 1)) {
+        this.undo_index = this.pilha.length - 2;
+      }
+      _ref = this.pilha[this.undo_index], center = _ref[0], zoom = _ref[1];
+      this.undo_index -= 1;
+      if (this.undo_index < 0) {
+        this.hide_undo();
+      }
+      this.show_redo();
+      return this.sl.map.setView(center, zoom);
+    };
+
+    PilhaDeZoom.prototype.refazer = function() {
+      var center, zoom, _ref;
+      if (this.undo_index < 0) {
+        this.undo_index = 0;
+      }
+      _ref = this.pilha[this.undo_index + 1], center = _ref[0], zoom = _ref[1];
+      this.undo_index += 1;
+      this.sl.map.setView(center, zoom);
+      if (this.undo_index >= this.pilha.length - 1) {
+        this.hide_redo();
+      }
+      return this.show_undo();
+    };
+
+    PilhaDeZoom.prototype.show = function() {
+      if (!this.undozoom_visivel) {
+        $(this.id_undozoom).show();
+        this.undozoom_visivel = true;
+      }
+      if (!this.undo_visivel) {
+        this.hide_undo();
+      }
+      if (!this.redo_visivel) {
+        return this.hide_redo();
+      }
+    };
+
+    PilhaDeZoom.prototype.hide = function() {
+      if (!this.undo_visivel && !this.redo_visivel) {
+        $(this.id_undozoom).hide();
+        return this.undozoom_visivel = false;
+      }
+    };
+
+    PilhaDeZoom.prototype.show_undo = function() {
+      this.undo_visivel = true;
+      this.show();
+      return $(this.id_undozoom + " a.undo").show();
+    };
+
+    PilhaDeZoom.prototype.show_redo = function() {
+      this.redo_visivel = true;
+      this.show();
+      return $(this.id_undozoom + " a.redo").show();
+    };
+
+    PilhaDeZoom.prototype.hide_undo = function() {
+      $(this.id_undozoom + " a.undo").hide();
+      this.undo_visivel = false;
+      return this.hide();
+    };
+
+    PilhaDeZoom.prototype.hide_redo = function() {
+      $(this.id_undozoom + " a.redo").hide();
+      this.redo_visivel = false;
+      return this.hide();
+    };
+
+    PilhaDeZoom.prototype.esta_vazia = function() {
+      return this.pilha.length === 0;
+    };
+
+    return PilhaDeZoom;
 
   })();
 
@@ -25791,13 +25849,14 @@ L.MarkerClusterGroup.include({
 
   L.Icon.Default.imagePath = "/sl/images/leaflet";
 
-  sl_IconCluster = new L.DivIcon({
+  window.SL_ICON_CLUSTER = new L.DivIcon({
     html: '<div><span>1</span></div>',
     className: 'marker-cluster marker-cluster-small',
-    iconSize: new L.Point(40, 40)
+    iconSize: [40, 40],
+    popupAnchor: [0, -35]
   });
 
-  sl_IconePadrao = new L.Icon.Default();
+  window.SL_ICON_PADRAO = new L.Icon.Default();
 
   referencia_atual = null;
 
@@ -25822,6 +25881,7 @@ L.MarkerClusterGroup.include({
       this.add_itens_gdoc = __bind(this.add_itens_gdoc, this);
       this.get_data = __bind(this.get_data, this);
       this.create = __bind(this.create, this);
+      this.getIS = __bind(this.getIS, this);
       d = new Dicionario(opcoes);
       this.container_id = d.get('container_id', 'map');
       this.tab_id = "tab-" + this.container_id;
@@ -25832,6 +25892,7 @@ L.MarkerClusterGroup.include({
       this.Icones = d.get('icones', null);
       this.esconder_icones = d.get('esconder_icones', true);
       this.clusterizar = d.get('clusterizar', true);
+      this.useBsPopup = d.get('useBsPopup', true);
       this.urlosm = d.get('url_osm', "http://{s}.tile.osm.org/{z}/{x}/{y}.png");
       this.url = d.get('url', null);
       if (!this.url) {
@@ -25842,14 +25903,18 @@ L.MarkerClusterGroup.include({
       };
       this.func_convert = d.get('convert', func);
       this.create();
-      this.dados = new Dados();
+      this.dados = new Dados(this);
       this.tabList = new TabList(this.lista_id, this);
       this.get_data();
     }
 
+    Searchlight.prototype.getIS = function() {
+      return "SL(\"" + this.map_id + "\")";
+    };
+
     Searchlight.prototype.create = function() {
       $("#" + this.container_id).append("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.opcoes_id + "'>Opções</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.tab_id + "'><div id='" + this.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.lista_id + "' ><div id='" + this.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.opcoes_id + "' > </div> </div> ");
-      this.bsPopup = new Popup(this.container_id);
+      this.bsPopup = new Popup(this, this.container_id);
       this.CamadaBasica = L.tileLayer(this.urlosm, {
         'attribution': attribution,
         'maxZoom': 18
@@ -26026,32 +26091,6 @@ L.MarkerClusterGroup.include({
     };
 
     return Dicionario;
-
-  })();
-
-  Popup = (function() {
-    function Popup(container_id) {
-      var corpo;
-      this.container_id = container_id;
-      this.id = "popup-" + container_id;
-      corpo = "<div id=\"" + this.id + "\" class=\"modal fade\" data-role='dialog'>";
-      corpo += ' <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title"></h4> </div> <div class="modal-body"> </div> <div class="modal-footer"> <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button> </div> </div><!-- /.modal-content --> </div><!-- /.modal-dialog --> </div>';
-      $("body").append(corpo);
-    }
-
-    Popup.prototype.show = function() {
-      return $("#" + this.id).modal('show');
-    };
-
-    Popup.prototype.setTitle = function(title) {
-      return $("#" + this.id + " h4.modal-title").html(title);
-    };
-
-    Popup.prototype.setBody = function(body) {
-      return $("#" + this.id + " div.modal-body").html(body);
-    };
-
-    return Popup;
 
   })();
 

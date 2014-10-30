@@ -66,14 +66,15 @@ class Controle
           m.setIcon(m.slinfo.icon)
 
   esconderIconesMarcVisiveis: ()=>
-      for m in @getMarcadoresVisiveis()
-          m.setIcon(sl_IconCluster)
+      markers = @getMarcadoresVisiveis()
+      for m, i in markers 
+          m.setIcon(window.SL_ICON_CLUSTER)
 
   getMarcadoresVisiveis:()=>
       if @clusterCtr.camadaAnalise
-          marcadores =  @clusterCtr.camadaAnalise._layers
+          marcadores =  @clusterCtr.camadaAnalise.getLayers() 
       else
-          marcadores = @sl.markers._layers
+          marcadores = @sl.markers.getLayers() 
       marcadores_visiveis = []
       for m of marcadores
           mark = marcadores[m]
@@ -95,7 +96,7 @@ class Controle
               m.slinfo.ultimo_center = @sl.map.getCenter()
               center = new L.LatLng(m.slinfo.latitude,m.slinfo.longitude)
               @sl.map.setView(center, 18)
-              #@showMarcPopup(m) 
+              #@showMarcadorPopup(m) 
 
 
   addCatsToControl: (map_id)=>
