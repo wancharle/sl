@@ -85,6 +85,7 @@ class Controle
   markerClick: (ev) =>
       m = ev.layer
       @marcador_clicado = m
+      @ultimo_marcador_clicado = m
       if @sl.esconder_icones
           if m.slinfo.ultimo_zoom
               @sl.map.setView(m.slinfo.ultimo_center,m.slinfo.ultimo_zoom)

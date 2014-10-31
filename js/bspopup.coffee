@@ -34,7 +34,7 @@ class Popup
     $("##{@id} div.modal-body").html(body)
 
   showMarcador: ->
-    m=@sl.control.marcador_clicado 
+    m=@sl.control.ultimo_marcador_clicado 
     @setTitle(m.slinfo.texto)
     @setBody(m.slinfo.texto)
     @show()

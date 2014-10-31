@@ -24970,7 +24970,7 @@ L.MarkerClusterGroup.include({
 
     Popup.prototype.showMarcador = function() {
       var m;
-      m = this.sl.control.marcador_clicado;
+      m = this.sl.control.ultimo_marcador_clicado;
       this.setTitle(m.slinfo.texto);
       this.setBody(m.slinfo.texto);
       return this.show();
@@ -25439,6 +25439,7 @@ L.MarkerClusterGroup.include({
       var center, m;
       m = ev.layer;
       this.marcador_clicado = m;
+      this.ultimo_marcador_clicado = m;
       if (this.sl.esconder_icones) {
         if (m.slinfo.ultimo_zoom) {
           this.sl.map.setView(m.slinfo.ultimo_center, m.slinfo.ultimo_zoom);
