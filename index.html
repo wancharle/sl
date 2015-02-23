@@ -1,47 +1,40 @@
 <html>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />                                                                                                                            
+<meta name="viewport" content="width=device-width, initial-scale=1" /> 
 <script src="build/searchlight.js"></script>
 <style>
-#pac,#porto,#google { width:640px;float:left; margin:10px;}
-#map-pac,#map-porto,#map-google {width:100%; height:400px;}
-#lista-pac,#lista-porto,#lista-google { height: 400px!important; overflow: auto}
+#pac,#porto,#google { width:90%; margin:10px auto;}
+#map-pac,#map-porto,#map-google {width:100%; height:85%;}
+#lista-pac,#lista-porto,#lista-google { height: 85%!important; overflow: auto}
 </style>
 <body>
 
 <div id="porto"> </div>
-<div id="pac"> </div>
-<div id="google"> </div>
 <script>
-portoalegrecc_json = "http://portoalegre.cc/causes/visibles?topLeftY=-29.993308319952344&topLeftX=-51.07286486145017&bottomRightY=-30.127023880027313&bottomRightX=-51.33413347717283&currentZoom=1&maxZoom=6"
-pacc_jsonp = "https://dl.dropbox.com/u/877911/portoalegre.js"
-google_docs = "https://docs.google.com/spreadsheet/pub?key=0AhU-mW4ERuT5dHBRcGF5eml1aGhnTzl0RXh3MHdVakE&single=true&gid=0&output=html"
+pacc_jsonp = "http://sl.wancharle.com.br/note/lista?callback=slwan"
 
 
-Icones = {}
-Icones["1"] = new L.icon({ iconUrl:"images/pin_1.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["2"] = new L.icon({ iconUrl:"images/pin_2.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["3"] = new L.icon({ iconUrl:"images/pin_3.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["4"] = new L.icon({ iconUrl:"images/pin_4.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["5"] = new L.icon({ iconUrl:"images/pin_5.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["6"] = new L.icon({ iconUrl:"images/pin_6.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["7"] = new L.icon({ iconUrl:"images/pin_7.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["8"] = new L.icon({ iconUrl:"images/pin_8.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["9"] = new L.icon({ iconUrl:"images/pin_9.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["10"] = new L.icon({ iconUrl:"images/pin_10.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["11"] = new L.icon({ iconUrl:"images/pin_11.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
-Icones["12"] = new L.icon({ iconUrl:"images/pin_12.png",iconSize:     [45, 58], iconAnchor:   [23, 48], popupAnchor: [0, -40] })
- function convert_item_porto(item){
+function convert_item_porto(item){
         item_convertido = {}
-        item_convertido.longitude = ""+item.cause.longitude
-        item_convertido.latitude = "" +item.cause.latitude
-        item_convertido.texto = item.cause.category_name
-        item_convertido.cat = item.cause.category_name
-        item_convertido.cat_id = item.cause.category_id
-        //item_convertido.icon = Icones[item_convertido.cat_id]
+        item_convertido.longitude = ""+item.longitude
+        item_convertido.latitude = "" +item.latitude
+	item_convertido.title = item.user.username
+        item_convertido.texto ="Usuario: "+ item.user.username
+	item_convertido.texto+="<br>Data: "+item.data_hora
+	if (item.categoria)
+		item_convertido.texto+="<br>Categoria: "+item.categoria
+	if (item.comentarios)
+		item_convertido.texto+="<br>Comentário: "+item.comentarios
+	if (item.fotoURL)
+		item_convertido.texto+="<br>Foto: <img height='200px' src='"+item.fotoURL+"'>"///JSON.stringify(item).replace(/,/g,'<br/>')
+        item_convertido.cat = item.categoria
         return item_convertido 
     } 
-
-function portoalegre_cc(map_id="map"){
+function slwan(data){
+	SL('map-porto').carregaDados(data);
+}
+function portoalegre_cc(map_id){
    
     conf = {
         'url':pacc_jsonp,
@@ -50,56 +43,13 @@ function portoalegre_cc(map_id="map"){
         'container_id':'porto'
         }   
     mps2 = new Searchlight(conf)
-}
- function convert_item_pac(item){
-        item_convertido = {}
-        //console.log('1');
-        //console.log(item_convertido);
-        if ((item.val_lat.length > 0) && (item.val_long.length > 0)){
-        latlog = dms2decPTBR(item.val_lat,item.val_long)
-        //if (isNaN(latlog[0]) || isNaN(latlog[1])){
-        //    return null;
-      //  }
-        item_convertido.longitude = ""+latlog[1]
-        item_convertido.latitude = "" +latlog[0]
-        item_convertido.texto = item.dsc_titulo
-        item_convertido.cat = item.idn_estagio+"%";
-         }else{
-             return null;
-             }
-        //console.log(item_convertido);
-        //item_convertido.cat = item.cause.category_name
-        //item_convertido.icon = Icones[item_convertido.cat_id]
-        return item_convertido 
-    } 
-
-function pac_cc(map_id="map"){
-   
-    conf = {
-        'url':'http://localhost/sl/PAC_2014_04.csv',
-        'convert':convert_item_pac,
-       // 'icones':Icones,
-        'container_id':'pac'
-        }   
-    mps2 = new Searchlight(conf)
-}
-
-
-
-
-
-
-
-function gdocs(){
-    mps = new Searchlight({'useBsPopup':false,'esconder_icones':false,'url':google_docs,'container_id':'google'});
+    console.log(mps2)
 }
 
 $(document).ready(function(){
    console.log('ready') 
    //main()
    portoalegre_cc();
-   pac_cc();
-   gdocs();
     });
 </script>
 </body>

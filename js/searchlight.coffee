@@ -38,53 +38,36 @@ window.SL = (map_id) ->
 class Searchlight
 
   constructor: (opcoes={}) ->
-    d = new Dicionario(opcoes)
-    @container_id =  d.get('container_id','map')
-    @tab_id = "tab-"+ @container_id
-    @map_id = "map-"+ @container_id
-    @lista_id = "lista-"+ @container_id
-    @opcoes_id = "opcoes-"+ @container_id
-    sl_referencias[@map_id]  = this 
+    @config = new Config(opcoes)
 
-    @Icones =  d.get('icones', null)
-    @esconder_icones =  d.get('esconder_icones', true)
-    @clusterizar =  d.get('clusterizar', true)
-    @useBsPopup = d.get('useBsPopup', true)
-
-
-    @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
-    @url =  d.get('url', null)
-    if not @url
-        @url = decodeURIComponent(getURLParameter("data"))
-    
-    # funcao de conversao para  geoJSON
-    func = (item) -> return item
-    @func_convert = d.get('convert',func)
+    sl_referencias[@config.map_id]  = this 
 
     @create()
     
     @dados = new Dados(this)
-    @tabList = new TabList(@lista_id,this)
+    @tabList = new TabList(@config.lista_id,this)
     @get_data()
 
   getIS: =>  # retorna a string da instancia
-    return "SL(\"#{@map_id}\")" 
+    return "SL(\"#{@config.map_id}\")" 
+
   create: () =>
     # criando container:
-    $("##{@container_id}").append("<ul class='nav nav-tabs' role='tablist'>
-    <li class='active'><a data-toggle='tab' href='##{@tab_id}'>Mapa</a></li>
-    <li><a data-toggle='tab' href='#tab-#{@lista_id}'>Lista</a></li>
-    <li><a data-toggle='tab' href='#tab-#{@opcoes_id}'>Opções</a></li>
+    $("##{@config.container_id}").append("<ul class='nav nav-tabs' role='tablist'>
+    <li class='active'><a data-toggle='tab' href='##{@config.tab_id}'>Mapa</a></li>
+    <li><a data-toggle='tab' href='#tab-#{@config.lista_id}'>Lista</a></li>
+    <li><a data-toggle='tab' href='#tab-#{@config.opcoes_id}'>Opções</a></li>
     </ul>
     <div class='tab-content'>
-      <div class='tab-pane active' id='#{@tab_id}'><div id='#{@map_id}' > </div> </div>
-      <div class='tab-pane' id='tab-#{@lista_id}' ><div id='#{@lista_id}'> </div> </div>
-      <div class='tab-pane' id='tab-#{@opcoes_id}' > </div>
+      <div class='tab-pane active' id='#{@config.tab_id}'><div id='#{@config.map_id}' > </div> </div>
+      <div class='tab-pane' id='tab-#{@config.lista_id}' ><div id='#{@config.lista_id}'> </div> </div>
+      <div class='tab-pane' id='tab-#{@config.opcoes_id}' > </div>
     </div> ")
-    @bsPopup = new Popup(this,@container_id)
+    @bsPopup = new Popup(this,@config.container_id)
 
-    @CamadaBasica = L.tileLayer(@urlosm,  { 'attribution': attribution, 'maxZoom': 18 })
-    @map = L.map(@map_id, {layers:[@CamadaBasica],'center': SENADO_FEDERAL,'zoom': 13}) #TODO: mudar centro e zoom 
+    @CamadaBasica = L.tileLayer(@config.urlosm,  { 'attribution': attribution, 'maxZoom': 18 })
+    console.log(@config)
+    @map = L.map(@config.map_id, {layers:[@CamadaBasica],'center': SENADO_FEDERAL,'zoom': 13}) #TODO: mudar centro e zoom 
     
     # criando camada com clusters
     if @clusterizar
@@ -102,14 +85,14 @@ class Searchlight
     @markers.fire("data:loading")
    
     # obtendo dados
-    if @url.indexOf("docs.google.com/spreadsheet") > -1 
-      Tabletop.init( { 'key': @url, 'callback':  (data)=>
+    if @config.url.indexOf("docs.google.com/spreadsheet") > -1 
+      Tabletop.init( { 'key': @config.url, 'callback':  (data)=>
           @carregaDados(data)
       , 'simpleSheet': true } )
     else
-      if @url.slice(0,4)=="http"
-        if @url.slice(-4)==".csv"
-          Papa.parse(@url, {
+      if @config.url.slice(0,4)=="http"
+        if @config.url.slice(-4)==".csv"
+          Papa.parse(@config.url, {
             header:true,
             download: true,
             complete: (results, file) =>
@@ -117,20 +100,13 @@ class Searchlight
             })
 
         else
-          getJSONP(@url, (data)=>
+          getJSONP(@config.url, (data)=>
               @carregaDados(data)
           )
       else
-        getJSON(@url, (data) =>
+        getJSON(@config.url, (data) =>
           @carregaDados(data)
         )
-
-  add_itens_gdoc: (data) =>
-    for d,i in data
-      p =  [parseFloat(d.latitude.replace(',','.')), parseFloat(d.longitude.replace(',','.'))]
-      L.marker(p).addTo(@basel).bindPopup(d.textomarcador)
-    @map.addLayer(@basel)
-    @map.fitBounds(@basel.getBounds())
 
   autoZoom: () =>
     @map.fitBounds(@markers.getBounds())
@@ -154,7 +130,7 @@ class Searchlight
       @map.fitBounds(@markers.getBounds())
       @carregando = true
 
-    @control.addCatsToControl(@map_id)
+    @control.addCatsToControl(@config.map_id)
     @tabList.load()
     @markers.fire("data:loaded")
     @control.atualizarIconesMarcVisiveis()
@@ -165,7 +141,7 @@ class Searchlight
     @autoZoom() 
       
   addItem: (item) =>
-    @dados.addItem(item,@func_convert)
+    @dados.addItem(item,@config.func_convert)
 
   mostrarCamadaMarkers: () =>
     @map.addLayer(@markers)

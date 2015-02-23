@@ -3,14 +3,14 @@ class Controle
     @sl = sl
     @sl.map.addControl(new SLControl())
     @sl.map.addControl(new SLUndoRedoControl())
-    @id_control = "#"+@sl.map_id+" div.searchlight-control"
-    @id_opcoes = "#"+@sl.map_id+ " div.searchlight-opcoes" 
+    @id_control = "#"+@sl.config.map_id+" div.searchlight-control"
+    @id_opcoes = "#"+@sl.config.map_id+ " div.searchlight-opcoes" 
     @id_camadas = @id_opcoes + "ul"
     
     $(@id_control).mouseenter(@show_opcoes)
     $(@id_control).bind('touchstart',@show_opcoes)
-    $("#"+@sl.map_id).mouseover(@hide_opcoes)
-    $("#"+@sl.map_id).bind('touchstart',@hide_opcoes)
+    $("#"+@sl.config.map_id).mouseover(@hide_opcoes)
+    $("#"+@sl.config.map_id).bind('touchstart',@hide_opcoes)
 
     #registrando eventos popup e markers
     
@@ -55,7 +55,7 @@ class Controle
         )
 
   atualizarIconesMarcVisiveis: () =>
-      if @sl.esconder_icones
+      if @sl.config.esconder_icones
          if @sl.map.getZoom() >= 16
              @mostrarIconesMarcVisiveis()
          else
@@ -86,7 +86,7 @@ class Controle
       m = ev.layer
       @marcador_clicado = m
       @ultimo_marcador_clicado = m
-      if @sl.esconder_icones
+      if @sl.config.esconder_icones
           if m.slinfo.ultimo_zoom
               @sl.map.setView(m.slinfo.ultimo_center,m.slinfo.ultimo_zoom)
               m.slinfo.ultimo_zoom = null 
@@ -123,12 +123,12 @@ class Controle
       @clusterCtr.update()
       @sl.markers.clearLayers()
 
-      if $("input:checkbox[name="+@sl.map_id+"-cat]:checked").size() > 0
+      if $("input:checkbox[name="+@sl.config.map_id+"-cat]:checked").size() > 0
           @sl.markers.fire("data:loading")
-          setTimeout("SL('"+@sl.map_id+"').control.carregaDados()",50)
+          setTimeout("SL('"+@sl.config.map_id+"').control.carregaDados()",50)
 
   carregaDados:() =>
-      $("input:checkbox[name="+@sl.map_id+"-cat]:checked").each((index,element)=>
+      $("input:checkbox[name="+@sl.config.map_id+"-cat]:checked").each((index,element)=>
           cat=$(element).val();
           @sl.dados.catAddMarkers(cat,@sl.markers)
       )

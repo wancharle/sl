@@ -6,7 +6,7 @@ class ClusterCtr
     @pilha_de_zoom = new PilhaDeZoom(@sl)
     @clusters = {}
     
-    @id_analise = "#"+@sl.map_id+ " div.searchlight-analise"
+    @id_analise = "#"+@sl.config.map_id+ " div.searchlight-analise"
     $(@id_analise).append("<p class='center'><a href='#' onclick='#{@sl.getIS()}.control.clusterCtr.desfocar()'>DESFOCAR</a></p>")
     $(@id_analise).hide()
 
@@ -67,7 +67,7 @@ class ClusterCtr
 
   mostraPopup: () =>
     @atualizaPopup()
-    if @sl.useBsPopup
+    if @sl.config.useBsPopup
       @sl.bsPopup.show()
     else
       @popup.openOn(@sl.map)
@@ -137,7 +137,7 @@ class ClusterCtr
       html+="<ul>"
       cat = cats_ord[0]
       for cat, i in cats_ord
-        html += "<li><a title='Focar no subgrupo "+cat[0]+"'  href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\");return true;'>"+cat[0]+"</a> ("+cat[1].length+")</li>"
+        html += "<li><a title='Focar no subgrupo "+cat[0]+"'  href='#' onclick='SL(\""+@sl.config.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\");return true;'>"+cat[0]+"</a> ("+cat[1].length+")</li>"
       html +="</ul>"
     else
       html+='<ul class="icones">'
@@ -145,14 +145,14 @@ class ClusterCtr
         cat_id = @sl.dados.categorias_id[cat[0]]
         iconUrl = @sl.Icones[cat_id].options.iconUrl
         html += "<li>"
-        html += "<p class='img'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'><img src='"+iconUrl+"'></a></p>"
-        html += "<p class='texto'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick=':SL(\""+@sl.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'>"+cat[1].length+"</a></p>"
+        html += "<p class='img'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick='SL(\""+@sl.config.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'><img src='"+iconUrl+"'></a></p>"
+        html += "<p class='texto'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick=':SL(\""+@sl.config.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'>"+cat[1].length+"</a></p>"
         html +="</li>"
       html +="</ul>"
 
-    html +="<p class='center'><input type='button' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.zoomGrupo();' value='expandir grupo' /></p>"
+    html +="<p class='center'><input type='button' onclick='SL(\""+@sl.config.map_id+"\").control.clusterCtr.zoomGrupo();' value='expandir grupo' /></p>"
     html +="</div>"
-    if @sl.useBsPopup
+    if @sl.config.useBsPopup
       @sl.bsPopup.setTitle("Dados sobre este do grupo")
       @sl.bsPopup.setBody(html)
     else
@@ -165,7 +165,7 @@ class ClusterCtr
       if @clickOrdem == 1
         @cluster_clicado = cluster
         setTimeout(() =>
-          @showPopup(@sl.map_id)
+          @showPopup(@sl.config.map_id)
         , 600)
 
 # vim: set ts=2 sw=2 sts=2 expandtab:

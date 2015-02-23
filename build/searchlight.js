@@ -20564,7 +20564,7 @@ L.Map.include({
 }(window, document));
 /*
 	Papa Parse
-	v3.1.2
+	v3.1.4
 	https://github.com/mholt/PapaParse
 */
 (function(global)
@@ -20754,7 +20754,7 @@ L.Map.include({
 					return results;
 				}
 			}
-			else if (_input instanceof File)
+			else if ((global.File && _input instanceof File) || _input instanceof Object)	// ...Safari. (see issue #106)
 			{
 				if (config.step || config.chunk)
 				{
@@ -20958,11 +20958,23 @@ L.Map.include({
 		var start = 0, fileSize = 0;
 		var aggregate = "";
 		var partialLine = "";
-		var xhr, nextChunk;
+		var xhr, url, nextChunk, finishedWithEntireFile;
 		var handle = new ParserHandle(copy(config));
+		handle.streamer = this;
 
-		this.stream = function(url)
+		this.resume = function()
 		{
+			nextChunk();
+		};
+
+		this.finished = function()
+		{
+			return finishedWithEntireFile;
+		};
+
+		this.stream = function(u)
+		{
+			url = u;
 			if (IS_WORKER)
 			{
 				nextChunk = function()
@@ -20980,110 +20992,116 @@ L.Map.include({
 			}
 
 			nextChunk();	// Starts streaming
-
-
-			function readChunk()
-			{
-				xhr = new XMLHttpRequest();
-				if (!IS_WORKER)
-				{
-					xhr.onload = chunkLoaded;
-					xhr.onerror = chunkError;
-				}
-				xhr.open("GET", url, !IS_WORKER);
-				if (config.step)
-				{
-					var end = start + config.chunkSize - 1;	// minus one because byte range is inclusive
-					if (fileSize && end > fileSize) // Hack around a Chrome bug: http://stackoverflow.com/q/24745095/1048862
-						end = fileSize;
-					xhr.setRequestHeader("Range", "bytes="+start+"-"+end);
-				}
-				xhr.send();
-				if (IS_WORKER && xhr.status == 0)
-					chunkError();
-				else
-					start += config.chunkSize;
-			}
-
-			function chunkLoaded()
-			{
-				if (xhr.readyState != 4)
-					return;
-
-				if (xhr.status < 200 || xhr.status >= 400)
-				{
-					chunkError();
-					return;
-				}
-
-				// Rejoin the line we likely just split in two by chunking the file
-				aggregate += partialLine + xhr.responseText;
-				partialLine = "";
-
-				var finishedWithEntireFile = !config.step || start > getFileSize(xhr);
-
-				if (!finishedWithEntireFile)
-				{
-					var lastLineEnd = aggregate.lastIndexOf("\n");
-
-					if (lastLineEnd < 0)
-						lastLineEnd = aggregate.lastIndexOf("\r");
-
-					if (lastLineEnd > -1)
-					{
-						partialLine = aggregate.substring(lastLineEnd + 1);	// skip the line ending character
-						aggregate = aggregate.substring(0, lastLineEnd);
-					}
-					else
-					{
-						// For chunk sizes smaller than a line (a line could not fit in a single chunk)
-						// we simply build our aggregate by reading in the next chunk, until we find a newline
-						nextChunk();
-						return;
-					}
-				}
-
-				var results = handle.parse(aggregate);
-				aggregate = "";
-
-				if (IS_WORKER)
-				{
-					global.postMessage({
-						results: results,
-						workerId: Papa.WORKER_ID,
-						finished: finishedWithEntireFile
-					});
-				}
-				else if (isFunction(config.chunk))
-				{
-					config.chunk(results);
-					results = undefined;
-				}
-
-				if (!finishedWithEntireFile && !results.meta.paused)
-					nextChunk();
-			}
-
-			function chunkError()
-			{
-				if (isFunction(config.error))
-					config.error(xhr.statusText);
-				else if (IS_WORKER && config.error)
-				{
-					global.postMessage({
-						workerId: Papa.WORKER_ID,
-						error: xhr.statusText,
-						finished: false
-					});
-				}
-			}
-
-			function getFileSize(xhr)
-			{
-				var contentRange = xhr.getResponseHeader("Content-Range");
-				return parseInt(contentRange.substr(contentRange.lastIndexOf("/") + 1));
-			}
 		};
+
+		function readChunk()
+		{
+			if (finishedWithEntireFile)
+			{
+				chunkLoaded();
+				return;
+			}
+
+			xhr = new XMLHttpRequest();
+			if (!IS_WORKER)
+			{
+				xhr.onload = chunkLoaded;
+				xhr.onerror = chunkError;
+			}
+			xhr.open("GET", url, !IS_WORKER);
+			if (config.step)
+			{
+				var end = start + config.chunkSize - 1;	// minus one because byte range is inclusive
+				if (fileSize && end > fileSize) // Hack around a Chrome bug: http://stackoverflow.com/q/24745095/1048862
+					end = fileSize;
+				xhr.setRequestHeader("Range", "bytes="+start+"-"+end);
+			}
+			xhr.send();
+			if (IS_WORKER && xhr.status == 0)
+				chunkError();
+			else
+				start += config.chunkSize;
+		}
+
+		function chunkLoaded()
+		{
+			if (xhr.readyState != 4)
+				return;
+
+			if (xhr.status < 200 || xhr.status >= 400)
+			{
+				chunkError();
+				return;
+			}
+
+			// Rejoin the line we likely just split in two by chunking the file
+			aggregate += partialLine + xhr.responseText;
+			partialLine = "";
+
+			finishedWithEntireFile = !config.step || start > getFileSize(xhr);
+
+			if (!finishedWithEntireFile)
+			{
+				var lastLineEnd = aggregate.lastIndexOf("\n");
+
+				if (lastLineEnd < 0)
+					lastLineEnd = aggregate.lastIndexOf("\r");
+
+				if (lastLineEnd > -1)
+				{
+					partialLine = aggregate.substring(lastLineEnd + 1);	// skip the line ending character
+					aggregate = aggregate.substring(0, lastLineEnd);
+				}
+				else
+				{
+					// For chunk sizes smaller than a line (a line could not fit in a single chunk)
+					// we simply build our aggregate by reading in the next chunk, until we find a newline
+					nextChunk();
+					return;
+				}
+			}
+
+			var results = handle.parse(aggregate);
+			aggregate = "";
+
+			if (IS_WORKER)
+			{
+				global.postMessage({
+					results: results,
+					workerId: Papa.WORKER_ID,
+					finished: finishedWithEntireFile
+				});
+			}
+			else if (isFunction(config.chunk))
+			{
+				console.log("CHUNKED");
+				config.chunk(results);
+				results = undefined;
+			}
+
+			if (!finishedWithEntireFile && !results.meta.paused)
+				nextChunk();
+		}
+
+		function chunkError()
+		{
+			if (isFunction(config.error))
+				config.error(xhr.statusText);
+			else if (IS_WORKER && config.error)
+			{
+				global.postMessage({
+					workerId: Papa.WORKER_ID,
+					error: xhr.statusText,
+					finished: false
+				});
+			}
+		}
+
+		function getFileSize(xhr)
+		{
+			var contentRange = xhr.getResponseHeader("Content-Range");
+			return parseInt(contentRange.substr(contentRange.lastIndexOf("/") + 1));
+		}
 	}
 
 
@@ -21101,18 +21119,22 @@ L.Map.include({
 			config.chunkSize = Papa.LocalChunkSize;
 
 		var start = 0;
+		var file;
+		var slice;
 		var aggregate = "";
 		var partialLine = "";
-		var reader, nextChunk, slice;
+		var reader, nextChunk, slice, finishedWithEntireFile;
 		var handle = new ParserHandle(copy(config));
+		handle.streamer = this;
 
 		// FileReader is better than FileReaderSync (even in worker) - see http://stackoverflow.com/q/24708649/1048862
 		// But Firefox is a pill, too - see issue #76: https://github.com/mholt/PapaParse/issues/76
-		var usingAsyncReader = typeof FileReader === 'function';
+		var usingAsyncReader = typeof FileReader !== 'undefined';	// Safari doesn't consider it a function (sigh...) - see issue #105
 
-		this.stream = function(file)
+		this.stream = function(f)
 		{
-			var slice = file.slice || file.webkitSlice || file.mozSlice;
+			file = f;
+			slice = file.slice || file.webkitSlice || file.mozSlice;
 
 			if (usingAsyncReader)
 			{
@@ -21124,89 +21146,100 @@ L.Map.include({
 				reader = new FileReaderSync();	// Hack for running in a web worker in Firefox
 
 			nextChunk();	// Starts streaming
-
-			function nextChunk()
-			{
-				if (start < file.size)
-					readChunk();
-			}
-
-			function readChunk()
-			{
-				var end = Math.min(start + config.chunkSize, file.size);
-				var txt = reader.readAsText(slice.call(file, start, end), config.encoding);
-				if (!usingAsyncReader)
-					chunkLoaded({ target: { result: txt } });	// mimic the async signature
-			}
-
-			function chunkLoaded(event)
-			{
-				// Very important to increment start each time before handling results
-				start += config.chunkSize;
-
-				// Rejoin the line we likely just split in two by chunking the file
-				aggregate += partialLine + event.target.result;
-				partialLine = "";
-
-				var finishedWithEntireFile = start >= file.size;
-
-				if (!finishedWithEntireFile)
-				{
-					var lastLineEnd = aggregate.lastIndexOf("\n");
-
-					if (lastLineEnd < 0)
-						lastLineEnd = aggregate.lastIndexOf("\r");
-
-					if (lastLineEnd > -1)
-					{
-						partialLine = aggregate.substring(lastLineEnd + 1);	// skip the line ending character
-						aggregate = aggregate.substring(0, lastLineEnd);
-					}
-					else
-					{
-						// For chunk sizes smaller than a line (a line could not fit in a single chunk)
-						// we simply build our aggregate by reading in the next chunk, until we find a newline
-						nextChunk();
-						return;
-					}
-				}
-
-				var results = handle.parse(aggregate);
-				aggregate = "";
-
-				if (IS_WORKER)
-				{
-					global.postMessage({
-						results: results,
-						workerId: Papa.WORKER_ID,
-						finished: finishedWithEntireFile
-					});
-				}
-				else if (isFunction(config.chunk))
-				{
-					config.chunk(results, file);
-					results = undefined;
-				}
-
-				if (!finishedWithEntireFile && !results.meta.paused)
-					nextChunk();
-			}
-
-			function chunkError()
-			{
-				if (isFunction(config.error))
-					config.error(reader.error, file);
-				else if (IS_WORKER && config.error)
-				{
-					global.postMessage({
-						workerId: Papa.WORKER_ID,
-						error: reader.error,
-						file: file,
-						finished: false
-					});
-				}
-			}
 		};
+
+		this.finished = function()
+		{
+			return finishedWithEntireFile;
+		};
+
+		this.resume = function()
+		{
+			nextChunk();
+		};
+
+		function nextChunk()
+		{
+			if (!finishedWithEntireFile)
+				readChunk();
+		}
+
+		function readChunk()
+		{
+			var end = Math.min(start + config.chunkSize, file.size);
+			var txt = reader.readAsText(slice.call(file, start, end), config.encoding);
+			if (!usingAsyncReader)
+				chunkLoaded({ target: { result: txt } });	// mimic the async signature
+		}
+
+		function chunkLoaded(event)
+		{
+			// Very important to increment start each time before handling results
+			start += config.chunkSize;
+
+			// Rejoin the line we likely just split in two by chunking the file
+			aggregate += partialLine + event.target.result;
+			partialLine = "";
+
+			finishedWithEntireFile = start >= file.size;
+
+			if (!finishedWithEntireFile)
+			{
+				var lastLineEnd = aggregate.lastIndexOf("\n");
+
+				if (lastLineEnd < 0)
+					lastLineEnd = aggregate.lastIndexOf("\r");
+
+				if (lastLineEnd > -1)
+				{
+					partialLine = aggregate.substring(lastLineEnd + 1);	// skip the line ending character
+					aggregate = aggregate.substring(0, lastLineEnd);
+				}
+				else
+				{
+					// For chunk sizes smaller than a line (a line could not fit in a single chunk)
+					// we simply build our aggregate by reading in the next chunk, until we find a newline
+					nextChunk();
+					return;
+				}
+			}
+
+			var results = handle.parse(aggregate);
+			aggregate = "";
+
+			if (IS_WORKER)
+			{
+				global.postMessage({
+					results: results,
+					workerId: Papa.WORKER_ID,
+					finished: finishedWithEntireFile
+				});
+			}
+			else if (isFunction(config.chunk))
+			{
+				config.chunk(results, file);
+				results = undefined;
+			}
+
+			if (!results || !results.meta.paused)
+				nextChunk();
+		}
+
+		function chunkError()
+		{
+			if (isFunction(config.error))
+				config.error(reader.error, file);
+			else if (IS_WORKER && config.error)
+			{
+				global.postMessage({
+					workerId: Papa.WORKER_ID,
+					error: reader.error,
+					file: file,
+					finished: false
+				});
+			}
+		}
+
 	}
 
 
@@ -21220,6 +21253,7 @@ L.Map.include({
 		var FLOAT = /^\s*-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?\s*$/i;
 
 		var self = this;
+		var _stepCounter = 0;	// Number of times step was called (number of rows parsed)
 		var _input;				// The input being parsed
 		var _parser;			// The core parser being used
 		var _paused = false;	// Whether we are paused or not
@@ -21230,7 +21264,25 @@ L.Map.include({
 			errors: [],
 			meta: {}
 		};
-		_config = copy(_config);
+
+		if (isFunction(_config.step))
+		{
+			var userStep = _config.step;
+			_config.step = function(results)
+			{
+				_results = results;
+				if (needsHeaderRow())
+					processResults();
+				else	// only call user's step function after header row
+				{
+					_stepCounter += results.data.length;
+					if (_config.preview && _stepCounter > _config.preview)
+						_parser.abort();
+					else
+						userStep(processResults(), self);
+				}
+			};
+		}
 
 		this.parse = function(input)
 		{
@@ -21248,29 +21300,17 @@ L.Map.include({
 				_results.meta.delimiter = _config.delimiter;
 			}
 
-			if (isFunction(_config.step))
-			{
-				var userStep = _config.step;
-				_config.step = function(results)
-				{
-					_results = results;
-					if (needsHeaderRow())
-						processResults();
-					else
-						userStep(processResults(), self);
-				};
-			}
-
+			var parserConfig = copy(_config);
 			if (_config.preview && _config.header)
-				_config.preview++;	// to compensate for header row
+				parserConfig.preview++;	// to compensate for header row
 
 			_input = input;
-			_parser = new Parser(_config);
+			_parser = new Parser(parserConfig);
 			_results = _parser.parse(_input);
 			processResults();
-			if (isFunction(_config.complete) && !_paused)
-				_config.complete(_results);
-			return _paused ? { meta: { paused: true } } : _results;
+			if (isFunction(_config.complete) && !_paused && (!self.streamer || self.streamer.finished()))
+				_config.complete(_results);	// TODO: In some cases, when chunk is specified, this executes before the chunk function...
+			return _paused ? { meta: { paused: true } } : (_results || { meta: { paused: false } });
 		};
 
 		this.pause = function()
@@ -21285,8 +21325,13 @@ L.Map.include({
 			_paused = false;
 			_parser = new Parser(_config);
 			_parser.parse(_input);
-			if (isFunction(_config.complete) && !_paused)
-				_config.complete(_results);
+			if (!_paused)
+			{
+				if (self.streamer && !self.streamer.finished())
+					self.streamer.resume();		// more of the file yet to come
+				else if (isFunction(_config.complete))
+					_config.complete(_results);
+			}
 		};
 
 		this.abort = function()
@@ -21295,7 +21340,7 @@ L.Map.include({
 			if (isFunction(_config.complete))
 				_config.complete(_results);
 			_input = "";
-		}
+		};
 
 		function processResults()
 		{
@@ -21307,7 +21352,6 @@ L.Map.include({
 
 			if (needsHeaderRow())
 				fillHeaderFields();
-
 			return applyHeaderAndDynamicTyping();
 		}
 
@@ -21334,14 +21378,15 @@ L.Map.include({
 			for (var i = 0; i < _results.data.length; i++)
 			{
 				var row = {};
+
 				for (var j = 0; j < _results.data[i].length; j++)
 				{
 					if (_config.dynamicTyping)
 					{
 						var value = _results.data[i][j];
-						if (value == "true")
+						if (value === "true" || value === "TRUE")
 							_results.data[i][j] = true;
-						else if (value == "false")
+						else if (value === "false" || value === "FALSE")
 							_results.data[i][j] = false;
 						else
 							_results.data[i][j] = tryParseFloat(value);
@@ -21372,7 +21417,6 @@ L.Map.include({
 
 			if (_config.header && _results.meta)
 				_results.meta.fields = _fields;
-
 			return _results;
 		}
 
@@ -21743,7 +21787,7 @@ L.Map.include({
 	function getScriptPath()
 	{
 		var id = "worker" + String(Math.random()).substr(2);
-		document.write('<script id="'+id+'"></script>');
+		document.write('<script id="'+id+'"></s'+'cript>');
 		return document.getElementById(id).previousSibling.src;
 	}
 
@@ -21812,7 +21856,7 @@ L.Map.include({
 				finished: true
 			});
 		}
-		else if (msg.input instanceof File)
+		else if ((global.File && msg.input instanceof File) || msg.input instanceof Object)	// thank you, Safari (see issue #106)
 		{
 			var results = Papa.parse(msg.input, msg.config);
 			if (results)
@@ -24937,7 +24981,7 @@ L.MarkerClusterGroup.include({
 
 }(window, document));
 (function() {
-  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, Popup, SENADO_FEDERAL, Searchlight, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
+  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, Popup, SENADO_FEDERAL, Searchlight, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -24971,7 +25015,11 @@ L.MarkerClusterGroup.include({
     Popup.prototype.showMarcador = function() {
       var m;
       m = this.sl.control.ultimo_marcador_clicado;
-      this.setTitle(m.slinfo.texto);
+      if (m.slinfo.title) {
+        this.setTitle(m.slinfo.title);
+      } else {
+        this.setTitle("");
+      }
       this.setBody(m.slinfo.texto);
       return this.show();
     };
@@ -25001,7 +25049,7 @@ L.MarkerClusterGroup.include({
       this.criaPopup();
       this.pilha_de_zoom = new PilhaDeZoom(this.sl);
       this.clusters = {};
-      this.id_analise = "#" + this.sl.map_id + " div.searchlight-analise";
+      this.id_analise = "#" + this.sl.config.map_id + " div.searchlight-analise";
       $(this.id_analise).append("<p class='center'><a href='#' onclick='" + (this.sl.getIS()) + ".control.clusterCtr.desfocar()'>DESFOCAR</a></p>");
       $(this.id_analise).hide();
       this.sl.map.on('dblclick', (function(_this) {
@@ -25085,7 +25133,7 @@ L.MarkerClusterGroup.include({
 
     ClusterCtr.prototype.mostraPopup = function() {
       this.atualizaPopup();
-      if (this.sl.useBsPopup) {
+      if (this.sl.config.useBsPopup) {
         return this.sl.bsPopup.show();
       } else {
         return this.popup.openOn(this.sl.map);
@@ -25182,7 +25230,7 @@ L.MarkerClusterGroup.include({
         cat = cats_ord[0];
         for (i = _i = 0, _len = cats_ord.length; _i < _len; i = ++_i) {
           cat = cats_ord[i];
-          html += "<li><a title='Focar no subgrupo " + cat[0] + "'  href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\");return true;'>" + cat[0] + "</a> (" + cat[1].length + ")</li>";
+          html += "<li><a title='Focar no subgrupo " + cat[0] + "'  href='#' onclick='SL(\"" + this.sl.config.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\");return true;'>" + cat[0] + "</a> (" + cat[1].length + ")</li>";
         }
         html += "</ul>";
       } else {
@@ -25192,15 +25240,15 @@ L.MarkerClusterGroup.include({
           cat_id = this.sl.dados.categorias_id[cat[0]];
           iconUrl = this.sl.Icones[cat_id].options.iconUrl;
           html += "<li>";
-          html += "<p class='img'><a title='Focar no subgrupo " + cat[0] + "' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'><img src='" + iconUrl + "'></a></p>";
-          html += "<p class='texto'><a title='Focar no subgrupo " + cat[0] + "' href='#' onclick=':SL(\"" + this.sl.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'>" + cat[1].length + "</a></p>";
+          html += "<p class='img'><a title='Focar no subgrupo " + cat[0] + "' href='#' onclick='SL(\"" + this.sl.config.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'><img src='" + iconUrl + "'></a></p>";
+          html += "<p class='texto'><a title='Focar no subgrupo " + cat[0] + "' href='#' onclick=':SL(\"" + this.sl.config.map_id + "\").control.clusterCtr.focar(\"" + cat[0] + "\")'>" + cat[1].length + "</a></p>";
           html += "</li>";
         }
         html += "</ul>";
       }
-      html += "<p class='center'><input type='button' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.zoomGrupo();' value='expandir grupo' /></p>";
+      html += "<p class='center'><input type='button' onclick='SL(\"" + this.sl.config.map_id + "\").control.clusterCtr.zoomGrupo();' value='expandir grupo' /></p>";
       html += "</div>";
-      if (this.sl.useBsPopup) {
+      if (this.sl.config.useBsPopup) {
         this.sl.bsPopup.setTitle("Dados sobre este do grupo");
         return this.sl.bsPopup.setBody(html);
       } else {
@@ -25217,13 +25265,41 @@ L.MarkerClusterGroup.include({
         this.cluster_clicado = cluster;
         return setTimeout((function(_this) {
           return function() {
-            return _this.showPopup(_this.sl.map_id);
+            return _this.showPopup(_this.sl.config.map_id);
           };
         })(this), 600);
       }
     };
 
     return ClusterCtr;
+
+  })();
+
+  Config = (function() {
+    function Config(opcoes) {
+      var d, func;
+      d = new Dicionario(opcoes);
+      this.container_id = d.get('container_id', 'map');
+      this.tab_id = "tab-" + this.container_id;
+      this.map_id = "map-" + this.container_id;
+      this.lista_id = "lista-" + this.container_id;
+      this.opcoes_id = "opcoes-" + this.container_id;
+      this.Icones = d.get('icones', null);
+      this.esconder_icones = d.get('esconder_icones', true);
+      this.clusterizar = d.get('clusterizar', true);
+      this.useBsPopup = d.get('useBsPopup', true);
+      this.urlosm = d.get('url_osm', "http://{s}.tile.osm.org/{z}/{x}/{y}.png");
+      this.url = d.get('url', null);
+      if (!this.url) {
+        this.url = decodeURIComponent(getURLParameter("data"));
+      }
+      func = function(item) {
+        return item;
+      };
+      this.func_convert = d.get('convert', func);
+    }
+
+    return Config;
 
   })();
 
@@ -25328,13 +25404,13 @@ L.MarkerClusterGroup.include({
       this.sl = sl;
       this.sl.map.addControl(new SLControl());
       this.sl.map.addControl(new SLUndoRedoControl());
-      this.id_control = "#" + this.sl.map_id + " div.searchlight-control";
-      this.id_opcoes = "#" + this.sl.map_id + " div.searchlight-opcoes";
+      this.id_control = "#" + this.sl.config.map_id + " div.searchlight-control";
+      this.id_opcoes = "#" + this.sl.config.map_id + " div.searchlight-opcoes";
       this.id_camadas = this.id_opcoes + "ul";
       $(this.id_control).mouseenter(this.show_opcoes);
       $(this.id_control).bind('touchstart', this.show_opcoes);
-      $("#" + this.sl.map_id).mouseover(this.hide_opcoes);
-      $("#" + this.sl.map_id).bind('touchstart', this.hide_opcoes);
+      $("#" + this.sl.config.map_id).mouseover(this.hide_opcoes);
+      $("#" + this.sl.config.map_id).bind('touchstart', this.hide_opcoes);
       this.sl.map.on('zoomend', (function(_this) {
         return function() {
           if (_this.marcador_clicado === null) {
@@ -25387,7 +25463,7 @@ L.MarkerClusterGroup.include({
     };
 
     Controle.prototype.atualizarIconesMarcVisiveis = function() {
-      if (this.sl.esconder_icones) {
+      if (this.sl.config.esconder_icones) {
         if (this.sl.map.getZoom() >= 16) {
           return this.mostrarIconesMarcVisiveis();
         } else {
@@ -25440,7 +25516,7 @@ L.MarkerClusterGroup.include({
       m = ev.layer;
       this.marcador_clicado = m;
       this.ultimo_marcador_clicado = m;
-      if (this.sl.esconder_icones) {
+      if (this.sl.config.esconder_icones) {
         if (m.slinfo.ultimo_zoom) {
           this.sl.map.setView(m.slinfo.ultimo_center, m.slinfo.ultimo_zoom);
           m.slinfo.ultimo_zoom = null;
@@ -25484,14 +25560,14 @@ L.MarkerClusterGroup.include({
       $(this.id_opcoes).hide();
       this.clusterCtr.update();
       this.sl.markers.clearLayers();
-      if ($("input:checkbox[name=" + this.sl.map_id + "-cat]:checked").size() > 0) {
+      if ($("input:checkbox[name=" + this.sl.config.map_id + "-cat]:checked").size() > 0) {
         this.sl.markers.fire("data:loading");
-        return setTimeout("SL('" + this.sl.map_id + "').control.carregaDados()", 50);
+        return setTimeout("SL('" + this.sl.config.map_id + "').control.carregaDados()", 50);
       }
     };
 
     Controle.prototype.carregaDados = function() {
-      $("input:checkbox[name=" + this.sl.map_id + "-cat]:checked").each((function(_this) {
+      $("input:checkbox[name=" + this.sl.config.map_id + "-cat]:checked").each((function(_this) {
         return function(index, element) {
           var cat;
           cat = $(element).val();
@@ -25870,7 +25946,6 @@ L.MarkerClusterGroup.include({
 
   Searchlight = (function() {
     function Searchlight(opcoes) {
-      var d, func;
       if (opcoes == null) {
         opcoes = {};
       }
@@ -25879,48 +25954,30 @@ L.MarkerClusterGroup.include({
       this.addItem = __bind(this.addItem, this);
       this.carregaDados = __bind(this.carregaDados, this);
       this.autoZoom = __bind(this.autoZoom, this);
-      this.add_itens_gdoc = __bind(this.add_itens_gdoc, this);
       this.get_data = __bind(this.get_data, this);
       this.create = __bind(this.create, this);
       this.getIS = __bind(this.getIS, this);
-      d = new Dicionario(opcoes);
-      this.container_id = d.get('container_id', 'map');
-      this.tab_id = "tab-" + this.container_id;
-      this.map_id = "map-" + this.container_id;
-      this.lista_id = "lista-" + this.container_id;
-      this.opcoes_id = "opcoes-" + this.container_id;
-      sl_referencias[this.map_id] = this;
-      this.Icones = d.get('icones', null);
-      this.esconder_icones = d.get('esconder_icones', true);
-      this.clusterizar = d.get('clusterizar', true);
-      this.useBsPopup = d.get('useBsPopup', true);
-      this.urlosm = d.get('url_osm', "http://{s}.tile.osm.org/{z}/{x}/{y}.png");
-      this.url = d.get('url', null);
-      if (!this.url) {
-        this.url = decodeURIComponent(getURLParameter("data"));
-      }
-      func = function(item) {
-        return item;
-      };
-      this.func_convert = d.get('convert', func);
+      this.config = new Config(opcoes);
+      sl_referencias[this.config.map_id] = this;
       this.create();
       this.dados = new Dados(this);
-      this.tabList = new TabList(this.lista_id, this);
+      this.tabList = new TabList(this.config.lista_id, this);
       this.get_data();
     }
 
     Searchlight.prototype.getIS = function() {
-      return "SL(\"" + this.map_id + "\")";
+      return "SL(\"" + this.config.map_id + "\")";
     };
 
     Searchlight.prototype.create = function() {
-      $("#" + this.container_id).append("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.opcoes_id + "'>Opções</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.tab_id + "'><div id='" + this.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.lista_id + "' ><div id='" + this.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.opcoes_id + "' > </div> </div> ");
-      this.bsPopup = new Popup(this, this.container_id);
-      this.CamadaBasica = L.tileLayer(this.urlosm, {
+      $("#" + this.config.container_id).append("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.config.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.opcoes_id + "'>Opções</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.config.tab_id + "'><div id='" + this.config.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.config.lista_id + "' ><div id='" + this.config.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.config.opcoes_id + "' > </div> </div> ");
+      this.bsPopup = new Popup(this, this.config.container_id);
+      this.CamadaBasica = L.tileLayer(this.config.urlosm, {
         'attribution': attribution,
         'maxZoom': 18
       });
-      this.map = L.map(this.map_id, {
+      console.log(this.config);
+      this.map = L.map(this.config.map_id, {
         layers: [this.CamadaBasica],
         'center': SENADO_FEDERAL,
         'zoom': 13
@@ -25940,9 +25997,9 @@ L.MarkerClusterGroup.include({
       var obj;
       obj = this;
       this.markers.fire("data:loading");
-      if (this.url.indexOf("docs.google.com/spreadsheet") > -1) {
+      if (this.config.url.indexOf("docs.google.com/spreadsheet") > -1) {
         return Tabletop.init({
-          'key': this.url,
+          'key': this.config.url,
           'callback': (function(_this) {
             return function(data) {
               return _this.carregaDados(data);
@@ -25951,9 +26008,9 @@ L.MarkerClusterGroup.include({
           'simpleSheet': true
         });
       } else {
-        if (this.url.slice(0, 4) === "http") {
-          if (this.url.slice(-4) === ".csv") {
-            return Papa.parse(this.url, {
+        if (this.config.url.slice(0, 4) === "http") {
+          if (this.config.url.slice(-4) === ".csv") {
+            return Papa.parse(this.config.url, {
               header: true,
               download: true,
               complete: (function(_this) {
@@ -25963,31 +26020,20 @@ L.MarkerClusterGroup.include({
               })(this)
             });
           } else {
-            return getJSONP(this.url, (function(_this) {
+            return getJSONP(this.config.url, (function(_this) {
               return function(data) {
                 return _this.carregaDados(data);
               };
             })(this));
           }
         } else {
-          return getJSON(this.url, (function(_this) {
+          return getJSON(this.config.url, (function(_this) {
             return function(data) {
               return _this.carregaDados(data);
             };
           })(this));
         }
       }
-    };
-
-    Searchlight.prototype.add_itens_gdoc = function(data) {
-      var d, i, p, _i, _len;
-      for (i = _i = 0, _len = data.length; _i < _len; i = ++_i) {
-        d = data[i];
-        p = [parseFloat(d.latitude.replace(',', '.')), parseFloat(d.longitude.replace(',', '.'))];
-        L.marker(p).addTo(this.basel).bindPopup(d.textomarcador);
-      }
-      this.map.addLayer(this.basel);
-      return this.map.fitBounds(this.basel.getBounds());
     };
 
     Searchlight.prototype.autoZoom = function() {
@@ -26017,7 +26063,7 @@ L.MarkerClusterGroup.include({
         this.map.fitBounds(this.markers.getBounds());
         this.carregando = true;
       }
-      this.control.addCatsToControl(this.map_id);
+      this.control.addCatsToControl(this.config.map_id);
       this.tabList.load();
       this.markers.fire("data:loaded");
       this.control.atualizarIconesMarcVisiveis();
@@ -26028,7 +26074,7 @@ L.MarkerClusterGroup.include({
     };
 
     Searchlight.prototype.addItem = function(item) {
-      return this.dados.addItem(item, this.func_convert);
+      return this.dados.addItem(item, this.config.func_convert);
     };
 
     Searchlight.prototype.mostrarCamadaMarkers = function() {
