@@ -66,11 +66,10 @@ class Searchlight
     @bsPopup = new Popup(this,@config.container_id)
 
     @CamadaBasica = L.tileLayer(@config.urlosm,  { 'attribution': attribution, 'maxZoom': 18 })
-    console.log(@config)
     @map = L.map(@config.map_id, {layers:[@CamadaBasica],'center': SENADO_FEDERAL,'zoom': 13}) #TODO: mudar centro e zoom 
     
     # criando camada com clusters
-    if @clusterizar
+    if @config.clusterizar
         @markers = new L.MarkerClusterGroup({ zoomToBoundsOnClick: false})
     else
         @markers = new L.FeatureGroup()

@@ -25160,6 +25160,9 @@ L.MarkerClusterGroup.include({
     ClusterCtr.prototype.focar = function(cat) {
       var c, cats, m, x, _i, _j, _len, _len1, _ref;
       this.sl.esconderCamadaMarkers();
+      if (this.camadaAnalise) {
+        this.sl.map.removeLayer(this.camadaAnalise);
+      }
       this.camadaAnalise = new L.MarkerClusterGroup({
         zoomToBoundsOnClick: false
       });
@@ -25781,10 +25784,10 @@ L.MarkerClusterGroup.include({
       var html;
       this.pilha = [];
       this.sl = sl;
-      this.id_undozoom = "#" + this.sl.map_id + " div.searchlight-undozoom";
+      this.id_undozoom = "#" + this.sl.config.map_id + " div.searchlight-undozoom";
       html = "";
-      html += "<a class='undo' title='desfazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>";
-      html += "<a class='redo' title='refazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.map_id + "\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>";
+      html += "<a class='undo' title='desfazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.config.map_id + "\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>";
+      html += "<a class='redo' title='refazer zoom em grupo' href='#' onclick='SL(\"" + this.sl.config.map_id + "\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>";
       html += "&nbsp;";
       $(this.id_undozoom).append(html);
       $(this.id_undozoom).hide();
@@ -25976,13 +25979,12 @@ L.MarkerClusterGroup.include({
         'attribution': attribution,
         'maxZoom': 18
       });
-      console.log(this.config);
       this.map = L.map(this.config.map_id, {
         layers: [this.CamadaBasica],
         'center': SENADO_FEDERAL,
         'zoom': 13
       });
-      if (this.clusterizar) {
+      if (this.config.clusterizar) {
         this.markers = new L.MarkerClusterGroup({
           zoomToBoundsOnClick: false
         });

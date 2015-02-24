@@ -88,6 +88,8 @@ class ClusterCtr
 
   focar: (cat) =>
       @sl.esconderCamadaMarkers()
+      if @camadaAnalise
+        @sl.map.removeLayer(@camadaAnalise)
       @camadaAnalise = new L.MarkerClusterGroup({ zoomToBoundsOnClick: false})
       @sl.map.addLayer(@camadaAnalise)
       @camadaAnalise.fire("data:loading") 

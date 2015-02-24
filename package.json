@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/wancharle/sl",
   "devDependencies": {
+    "bower": "^1.3.12",
     "grunt": "^0.4.5",
     "grunt-bower-concat": "^0.3.0",
     "grunt-contrib-coffee": "^0.11.0",

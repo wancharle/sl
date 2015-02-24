@@ -4,10 +4,10 @@ class PilhaDeZoom
     @pilha = []
     @sl = sl
 
-    @id_undozoom = "#"+@sl.map_id+ " div.searchlight-undozoom" 
+    @id_undozoom = "#"+@sl.config.map_id+ " div.searchlight-undozoom" 
     html = ""
-    html+="<a class='undo' title='desfazer zoom em grupo' href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>"
-    html+="<a class='redo' title='refazer zoom em grupo' href='#' onclick='SL(\""+@sl.map_id+"\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>"
+    html+="<a class='undo' title='desfazer zoom em grupo' href='#' onclick='SL(\"#{@sl.config.map_id}\").control.clusterCtr.pilha_de_zoom.desfazer()'>&nbsp;</a>"
+    html+="<a class='redo' title='refazer zoom em grupo' href='#' onclick='SL(\"#{@sl.config.map_id}\").control.clusterCtr.pilha_de_zoom.refazer()'>&nbsp;</a>"
     html+="&nbsp;"
     $(@id_undozoom).append(html)
     $(@id_undozoom).hide()
