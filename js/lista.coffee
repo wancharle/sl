@@ -6,13 +6,10 @@ class TabList
     @sl = sl
     @popup = @sl.bsPopup
     @lista_id = lista_id
-    @dados = sl.dados
-    if not window.SLTabList
-        window.SLTabList = {}  
-    window.SLTabList[lista_id]=this
+    @dados = @sl.dados
 
 
-  _instancia: ->  "window.SLTabList[\"#{@lista_id}\"]"
+  _instancia: ->  "#{@sl.getIS()}.tabList"
 
   load: ()->
     html= '<table class="table">'
@@ -21,7 +18,7 @@ class TabList
         html= "#{html}<tr><td><a href=\"javascript:void(0);\" onclick='javascript:#{@_instancia()}.open(#{i},\"#{cat_name}\");false;'> #{cat_name}</a></td><td>#{obj.texto}</td></tr>"
     html = "#{html}</table>" 
     $("##{@lista_id}").html(html)
-    console.log 'TabList carragado'
+    console.log 'TabList carregado'
 
   open: (i,cat_name) ->
     obj= @dados.getCatByName(cat_name)[i]

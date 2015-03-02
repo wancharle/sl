@@ -11,10 +11,13 @@ class Config
  
     @Icones =  d.get('icones', null)
     @esconder_icones =  d.get('esconder_icones', true)
+
     @clusterizar =  d.get('clusterizar', true)
+    
     @useBsPopup = d.get('useBsPopup', true)
 
     @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
+
     @url =  d.get('url', null)
     if not @url
         @url = decodeURIComponent(getURLParameter("data"))
@@ -23,6 +26,20 @@ class Config
     func = (item) -> return item
     @func_convert = d.get('convert',func)
 
+  getJSON: ()->
+    return {
+      'container_id': @container_id
+      'icones': @icones
+      'esconder_icones': @esconder_icone
+      'clusterizar':  @clusterizar
+      'useBsPopup': @useBsPopup
+      'url_osm': @urlosm
+      'url': @url
+      'convert': @func_convert
+    }
+
+      
+              
 
 
 

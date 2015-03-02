@@ -46,6 +46,7 @@ class Searchlight
     
     @dados = new Dados(this)
     @tabList = new TabList(@config.lista_id,this)
+    @tabOpcoes = new TabOpcoes(@config.opcoes_id,this)
     @get_data()
 
   getIS: =>  # retorna a string da instancia
@@ -53,15 +54,15 @@ class Searchlight
 
   create: () =>
     # criando container:
-    $("##{@config.container_id}").append("<ul class='nav nav-tabs' role='tablist'>
+    $("##{@config.container_id}").html("<ul class='nav nav-tabs' role='tablist'>
     <li class='active'><a data-toggle='tab' href='##{@config.tab_id}'>Mapa</a></li>
     <li><a data-toggle='tab' href='#tab-#{@config.lista_id}'>Lista</a></li>
     <li><a data-toggle='tab' href='#tab-#{@config.opcoes_id}'>Opções</a></li>
     </ul>
     <div class='tab-content'>
       <div class='tab-pane active' id='#{@config.tab_id}'><div id='#{@config.map_id}' > </div> </div>
-      <div class='tab-pane' id='tab-#{@config.lista_id}' ><div id='#{@config.lista_id}'> </div> </div>
-      <div class='tab-pane' id='tab-#{@config.opcoes_id}' > </div>
+      <div class='tab-pane' id='tab-#{@config.lista_id}' ><div class='searchlight-tap' id='#{@config.lista_id}'> </div> </div>
+      <div class='tab-pane' id='tab-#{@config.opcoes_id}' ><div class='searchlight-tab' id='#{@config.opcoes_id}'≳ </div> </div>
     </div> ")
     @bsPopup = new Popup(this,@config.container_id)
 
@@ -131,6 +132,7 @@ class Searchlight
 
     @control.addCatsToControl(@config.map_id)
     @tabList.load()
+    @tabOpcoes.load()
     @markers.fire("data:loaded")
     @control.atualizarIconesMarcVisiveis()
 

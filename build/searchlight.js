@@ -24981,7 +24981,7 @@ L.MarkerClusterGroup.include({
 
 }(window, document));
 (function() {
-  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, Popup, SENADO_FEDERAL, Searchlight, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
+  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, Controle, Dados, Dicionario, FormOpcoes, Marcador, PilhaDeZoom, Popup, SENADO_FEDERAL, Searchlight, TabList, TabOpcoes, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -25302,6 +25302,19 @@ L.MarkerClusterGroup.include({
       this.func_convert = d.get('convert', func);
     }
 
+    Config.prototype.getJSON = function() {
+      return {
+        'container_id': this.container_id,
+        'icones': this.icones,
+        'esconder_icones': this.esconder_icone,
+        'clusterizar': this.clusterizar,
+        'useBsPopup': this.useBsPopup,
+        'url_osm': this.urlosm,
+        'url': this.url,
+        'convert': this.func_convert
+      };
+    };
+
     return Config;
 
   })();
@@ -25551,7 +25564,7 @@ L.MarkerClusterGroup.include({
           c = cats[i];
           $(ul).append("<li><input type='checkbox' checked name='" + map_id + "-cat' value='" + c[0] + "' class='categoria'/>" + c[0] + " (" + c[1] + ")</li>");
         }
-        return $(op).append("<p class='center'><input type='button' onclick='SL(\"" + map_id + "\").control.update();' value='Atualizar Mapa' /></p>");
+        return $(op).append("<p class='center'><input type='button' onclick='" + (this.sl.getIS()) + ".control.update();' value='Atualizar Mapa' /></p>");
       } else {
         if (!$(this.id_opcoes).hasClass("sem-categoria")) {
           return $(this.id_opcoes).addClass("sem-categoria");
@@ -25565,7 +25578,7 @@ L.MarkerClusterGroup.include({
       this.sl.markers.clearLayers();
       if ($("input:checkbox[name=" + this.sl.config.map_id + "-cat]:checked").size() > 0) {
         this.sl.markers.fire("data:loading");
-        return setTimeout("SL('" + this.sl.config.map_id + "').control.carregaDados()", 50);
+        return setTimeout("" + (this.sl.getIS()) + ".control.carregaDados()", 50);
       }
     };
 
@@ -25686,15 +25699,11 @@ L.MarkerClusterGroup.include({
       this.sl = sl;
       this.popup = this.sl.bsPopup;
       this.lista_id = lista_id;
-      this.dados = sl.dados;
-      if (!window.SLTabList) {
-        window.SLTabList = {};
-      }
-      window.SLTabList[lista_id] = this;
+      this.dados = this.sl.dados;
     }
 
     TabList.prototype._instancia = function() {
-      return "window.SLTabList[\"" + this.lista_id + "\"]";
+      return "" + (this.sl.getIS()) + ".tabList";
     };
 
     TabList.prototype.load = function() {
@@ -25711,7 +25720,7 @@ L.MarkerClusterGroup.include({
       }
       html = "" + html + "</table>";
       $("#" + this.lista_id).html(html);
-      return console.log('TabList carragado');
+      return console.log('TabList carregado');
     };
 
     TabList.prototype.open = function(i, cat_name) {
@@ -25766,6 +25775,76 @@ L.MarkerClusterGroup.include({
     };
 
     return Marcador;
+
+  })();
+
+  FormOpcoes = (function() {
+    function FormOpcoes(tabOpcoes) {
+      this.tabOpcoes = tabOpcoes;
+      this.idUrlOSM = this.tabOpcoes.sl.config.container_id + '-urlosm';
+      this.idUrl = this.tabOpcoes.sl.config.container_id + '-url';
+      this.idClusterizar = this.tabOpcoes.sl.config.container_id + '-clusterizar';
+    }
+
+    FormOpcoes.prototype.render = function() {
+      var html;
+      html = "<form> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.tabOpcoes.sl.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='form-group'> <label for='url'>URL de dados</label> <input type='url' class='form-control' value='" + this.tabOpcoes.sl.config.url + "}id='" + this.idUrl + "' placeholder='informe o endereço público dos dados'> <p class='help-block'>Formatos aceitos: json, jsonp, csv e google spreadsheet.</p> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.tabOpcoes.sl.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> <button type='submit' class='btn btn-default searchlight-btn-salvar'>Salvar</button> </form>";
+      $("#" + this.tabOpcoes.opcoes_id).html(html);
+      return this.bind();
+    };
+
+    FormOpcoes.prototype.bind = function() {
+      var self;
+      self = this;
+      $("#" + this.idClusterizar).on('change', function(ev) {
+        return self.tabOpcoes.sl.config.clusterizar = this.checked;
+      });
+      $("#" + this.idUrlOSM).on('change', function(ev) {
+        return self.tabOpcoes.sl.config.urlosm = $(this).val();
+      });
+      $("#" + this.idUrl).on('change', function(ev) {
+        return self.tabOpcoes.sl.config.url = $(this).val();
+      });
+      return $("button.searchlight-btn-salvar").on('click', (function(_this) {
+        return function(ev) {
+          var searchlight;
+          return searchlight = new Searchlight(_this.tabOpcoes.sl.config.getJSON());
+        };
+      })(this));
+    };
+
+    return FormOpcoes;
+
+  })();
+
+  TabOpcoes = (function() {
+    function TabOpcoes(opcoes_id, sl) {
+      this.sl = sl;
+      this.popup = this.sl.bsPopup;
+      this.opcoes_id = opcoes_id;
+      this.dados = sl.dados;
+      this.form = new FormOpcoes(this);
+      this.form.render();
+    }
+
+    TabOpcoes.prototype._instancia = function() {
+      return "" + (this.sl.getIS()) + ".TabOpcoes";
+    };
+
+    TabOpcoes.prototype.load = function() {
+      return console.log('TabOpcoes carregado');
+    };
+
+    TabOpcoes.prototype.open = function(i, cat_name) {
+      var obj;
+      obj = this.dados.getCatByName(cat_name)[i];
+      this.popup.setTitle(obj.cat);
+      this.popup.setBody(obj.texto);
+      this.popup.show();
+      return false;
+    };
+
+    return TabOpcoes;
 
   })();
 
@@ -25965,6 +26044,7 @@ L.MarkerClusterGroup.include({
       this.create();
       this.dados = new Dados(this);
       this.tabList = new TabList(this.config.lista_id, this);
+      this.tabOpcoes = new TabOpcoes(this.config.opcoes_id, this);
       this.get_data();
     }
 
@@ -25973,7 +26053,7 @@ L.MarkerClusterGroup.include({
     };
 
     Searchlight.prototype.create = function() {
-      $("#" + this.config.container_id).append("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.config.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.opcoes_id + "'>Opções</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.config.tab_id + "'><div id='" + this.config.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.config.lista_id + "' ><div id='" + this.config.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.config.opcoes_id + "' > </div> </div> ");
+      $("#" + this.config.container_id).html("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.config.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.opcoes_id + "'>Opções</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.config.tab_id + "'><div id='" + this.config.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.config.lista_id + "' ><div class='searchlight-tap' id='" + this.config.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.config.opcoes_id + "' ><div class='searchlight-tab' id='" + this.config.opcoes_id + "'≳ </div> </div> </div> ");
       this.bsPopup = new Popup(this, this.config.container_id);
       this.CamadaBasica = L.tileLayer(this.config.urlosm, {
         'attribution': attribution,
@@ -26067,6 +26147,7 @@ L.MarkerClusterGroup.include({
       }
       this.control.addCatsToControl(this.config.map_id);
       this.tabList.load();
+      this.tabOpcoes.load();
       this.markers.fire("data:loaded");
       this.control.atualizarIconesMarcVisiveis();
       if (this.carregando === false && window['onSLcarregaDados'] !== void 0) {

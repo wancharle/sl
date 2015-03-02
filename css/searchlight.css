@@ -112,3 +112,6 @@ div.clusterPopup ul.icones li p.texto{
         }
 } 
 
+.searchlight-tab {
+    height: 85%!important; overflow: auto}
+    }

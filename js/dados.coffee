@@ -8,7 +8,9 @@ class Dados
     @categorias = {}
     @categorias_id = {}
 
-  getCatByName: (cat_name)-> @categorias[cat_name]
+  getCatByName: (cat_name)->
+    # retorna a lista de marcadores de uma determinada categoria
+    return @categorias[cat_name]
 
   _getCatOrCreate: (m)=>
     cat=@categorias[m.cat]

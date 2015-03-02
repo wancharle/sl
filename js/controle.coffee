@@ -113,7 +113,7 @@ class Controle
           for c,i in cats
               $(ul).append("<li><input type='checkbox' checked name='"+map_id+"-cat' value='"+c[0]+"' class='categoria'/>"+c[0]+" ("+c[1]+")</li>")
           
-          $(op).append("<p class='center'><input type='button' onclick='SL(\""+map_id+"\").control.update();' value='Atualizar Mapa' /></p>")
+          $(op).append("<p class='center'><input type='button' onclick='#{@sl.getIS()}.control.update();' value='Atualizar Mapa' /></p>")
       else
           if not $(@id_opcoes).hasClass("sem-categoria")
               $(@id_opcoes).addClass("sem-categoria")
@@ -123,13 +123,15 @@ class Controle
       @clusterCtr.update()
       @sl.markers.clearLayers()
 
-      if $("input:checkbox[name="+@sl.config.map_id+"-cat]:checked").size() > 0
+      if $("input:checkbox[name=#{@sl.config.map_id}-cat]:checked").size() > 0
           @sl.markers.fire("data:loading")
-          setTimeout("SL('"+@sl.config.map_id+"').control.carregaDados()",50)
+          setTimeout("#{@sl.getIS()}.control.carregaDados()",50)
 
   carregaDados:() =>
-      $("input:checkbox[name="+@sl.config.map_id+"-cat]:checked").each((index,element)=>
-          cat=$(element).val();
+      # atualiza o mapa para a nova configuração de filtro
+      #
+      $("input:checkbox[name=#{@sl.config.map_id}-cat]:checked").each((index,element)=>
+          cat=$(element).val()
           @sl.dados.catAddMarkers(cat,@sl.markers)
       )
 
