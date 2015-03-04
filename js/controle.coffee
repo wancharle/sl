@@ -1,5 +1,12 @@
 class Controle
+  @instances = {}
+  
+  @getIS: (config) ->
+    return Controle.instances[config.container_id]
+    
   constructor: (sl) ->
+    Controle.instances[sl.config.container_id] = @
+
     @sl = sl
     @sl.map.addControl(new SLControl())
     @sl.map.addControl(new SLUndoRedoControl())

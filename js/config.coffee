@@ -1,8 +1,43 @@
+class ConfigFontes
+  constructor: (d)->
+    @fontes = []
+ 
+    fontes_array = d.get('fontes',null)
+    if not fontes_array
+      url =  d.get('url', null)
+      if not url
+          url = decodeURIComponent(getURLParameter("data"))
+      # funcao de conversao para  geoJSON
+      func = (item) -> return item
+      func_code = d.get('convert',func)
+      @addFonte { url: url, func_code: func_code }
+    else
+      for fonte, index in fontes_array
+        @addFonte(fonte)
+
+  addFonte: (fonte) ->
+
+    if fonte.url and typeof fonte.func_code is 'function'
+      @fontes.push(fonte)
+    else
+      console.error "Error de configuração de fonte:",fonte
+
+  getFontes:() ->
+    return @fontes
+
+  updateFonte: (fonte,id) ->
+    @fontes[id]=fonte
+
+  getFonte: (i) ->
+    return @fontes[i]
+    #else
+    #  console.error "Error: fonte nº#{i} não esta configurada. Fontes: ", @fontes
+    #  return null
 
 class Config
   constructor: (opcoes)->
     d = new Dicionario(opcoes)
-
+    @d = d
     @container_id =  d.get('container_id','map')
     @tab_id = "tab-"+ @container_id
     @map_id = "map-"+ @container_id
@@ -17,15 +52,8 @@ class Config
     @useBsPopup = d.get('useBsPopup', true)
 
     @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
-
-    @url =  d.get('url', null)
-    if not @url
-        @url = decodeURIComponent(getURLParameter("data"))
-    
-    # funcao de conversao para  geoJSON
-    func = (item) -> return item
-    @func_convert = d.get('convert',func)
-
+    @fontes = new ConfigFontes(d)
+   
   getJSON: ()->
     return {
       'container_id': @container_id
@@ -34,8 +62,7 @@ class Config
       'clusterizar':  @clusterizar
       'useBsPopup': @useBsPopup
       'url_osm': @urlosm
-      'url': @url
-      'convert': @func_convert
+      'fontes': @fontes.getFontes()
     }
 
       

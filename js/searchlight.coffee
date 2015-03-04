@@ -46,8 +46,8 @@ class Searchlight
     
     @dados = new Dados(this)
     @tabList = new TabList(@config.lista_id,this)
-    @tabOpcoes = new TabOpcoes(@config.opcoes_id,this)
-    @get_data()
+    @tabOpcoes = new TabOpcoes(@config)
+    @dados.get_data()
 
   getIS: =>  # retorna a string da instancia
     return "SL(\"#{@config.map_id}\")" 
@@ -64,7 +64,7 @@ class Searchlight
       <div class='tab-pane' id='tab-#{@config.lista_id}' ><div class='searchlight-tap' id='#{@config.lista_id}'> </div> </div>
       <div class='tab-pane' id='tab-#{@config.opcoes_id}' ><div class='searchlight-tab' id='#{@config.opcoes_id}'≳ </div> </div>
     </div> ")
-    @bsPopup = new Popup(this,@config.container_id)
+    @bsPopup = new Popup(@config)
 
     @CamadaBasica = L.tileLayer(@config.urlosm,  { 'attribution': attribution, 'maxZoom': 18 })
     @map = L.map(@config.map_id, {layers:[@CamadaBasica],'center': SENADO_FEDERAL,'zoom': 13}) #TODO: mudar centro e zoom 
@@ -78,36 +78,11 @@ class Searchlight
    
     # criando classe para controlar o mapa
     @control = new  Controle(this)
-    
-      
-  get_data: () =>
-    obj = this
-    @markers.fire("data:loading")
    
-    # obtendo dados
-    if @config.url.indexOf("docs.google.com/spreadsheet") > -1 
-      Tabletop.init( { 'key': @config.url, 'callback':  (data)=>
-          @carregaDados(data)
-      , 'simpleSheet': true } )
-    else
-      if @config.url.slice(0,4)=="http"
-        if @config.url.slice(-4)==".csv"
-          Papa.parse(@config.url, {
-            header:true,
-            download: true,
-            complete: (results, file) =>
-              @carregaDados(results['data'])
-            })
-
-        else
-          getJSONP(@config.url, (data)=>
-              @carregaDados(data)
-          )
-      else
-        getJSON(@config.url, (data) =>
-          @carregaDados(data)
-        )
-
+    # amarrando eventos
+    $(@config.container_id).on 'dados:carregando', () => 
+      @markers.fire("data:loading")
+     
   autoZoom: () =>
     @map.fitBounds(@markers.getBounds())
 
@@ -142,7 +117,7 @@ class Searchlight
     @autoZoom() 
       
   addItem: (item) =>
-    @dados.addItem(item,@config.func_convert)
+    @dados.addItem(item,@config.fontes.getFonte(0).func_code)
 
   mostrarCamadaMarkers: () =>
     @map.addLayer(@markers)
@@ -152,7 +127,7 @@ class Searchlight
     @map.removeLayer(@markers)
     @map_ultimo_zoom =  @map.getZoom()
     @map_ultimo_center = @map.getCenter()
-
+Searchlight.Popup = Popup
 window.Searchlight = Searchlight
 
 # vim: set ts=2 sw=2 sts=2 expandtab:

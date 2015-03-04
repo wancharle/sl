@@ -1,12 +1,61 @@
 class Dados
+  @instances = {}
+
+  @getIS: (config)->
+    return Dados.instances[config.container_id]
+
   constructor: (sl)->
+    Dados.instances[sl.config.container_id]=@
     @sl = sl
+    @config = sl.config
     @clear()
 
   clear: =>
     @marcadores = []
     @categorias = {}
     @categorias_id = {}
+
+  get_data_fonte: (fonte)=> 
+    # obtendo dados
+    if fonte.url.indexOf("docs.google.com/spreadsheet") > -1 
+      Tabletop.init( { 'key':fonte.url, 'callback':  (data)=>
+          @carregaDados(data)
+      , 'simpleSheet': true } )
+    else
+      if fonte.url.slice(0,4)=="http"
+        if fonte.url.slice(-4)==".csv"
+          Papa.parse(fonte.url, {
+            header:true,
+            download: true,
+            complete: (results, file) =>
+              @carregaDados(results['data'])
+            })
+
+        else
+          getJSONP(fonte.url, (data)=>
+              @carregaDados(data)
+          )
+      else
+        getJSON(fonte.url, (data) =>
+          @carregaDados(data)
+        )
+
+  get_data: () =>
+    obj = this
+    $(@config.container_id).trigger("dados:carregando")
+    fonte = @config.fontes.getFonte("0") # todo generalizar para mis de uma fonte.
+    @get_data_fonte(fonte)
+  
+  carregaDados: (data)->
+    @sl.carregaDados(data)
+
+  getItensCount:() ->
+    # retorna o total de itens por url
+    itens = 0
+    for cat in @getCategorias()
+      itens+= @getCatByName(cat).length
+
+    return itens
 
   getCatByName: (cat_name)->
     # retorna a lista de marcadores de uma determinada categoria

@@ -24981,18 +24981,26 @@ L.MarkerClusterGroup.include({
 
 }(window, document));
 (function() {
-  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, Controle, Dados, Dicionario, FormOpcoes, Marcador, PilhaDeZoom, Popup, SENADO_FEDERAL, Searchlight, TabList, TabOpcoes, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
+  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, ConfigFontes, Controle, Dados, Dicionario, FormOpcoes, Marcador, PilhaDeZoom, Popup, PopupFontes, SENADO_FEDERAL, Searchlight, TabList, TabOpcoes, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   Popup = (function() {
-    function Popup(sl, container_id) {
-      var corpo;
-      this.sl = sl;
-      this.container_id = container_id;
+    Popup.instances = {};
+
+    Popup.getIS = function(config) {
+      return Popup.instances[config.container_id];
+    };
+
+    function Popup(config) {
+      var container_id, corpo;
+      this.config = config;
+      container_id = config.container_id;
+      Popup.instances[container_id] = this;
       this.id = "popup-" + container_id;
+      config.popup_id = this.id;
       corpo = "<div id=\"" + this.id + "\" class=\"modal fade\" data-role='dialog'>";
-      corpo += ' <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title"></h4> </div> <div class="modal-body"> </div> <div class="modal-footer"> <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button> </div> </div><!-- /.modal-content --> </div><!-- /.modal-dialog --> </div>';
+      corpo += ' <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title"></h4> </div> <div class="modal-body"> </div> <div class="modal-footer"> <button type="button" class="btn btn-default cancelar" data-dismiss="modal">Cancelar</button> <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button> </div> </div><!-- /.modal-content --> </div><!-- /.modal-dialog --> </div>';
       $("body").prepend(corpo);
     }
 
@@ -25008,13 +25016,37 @@ L.MarkerClusterGroup.include({
       return $("#" + this.id + " h4.modal-title").html(title);
     };
 
-    Popup.prototype.setBody = function(body) {
-      return $("#" + this.id + " div.modal-body").html(body);
+    Popup.prototype.setBody = function(body, button_title, callback, cancelar, callback_cancelar) {
+      if (button_title == null) {
+        button_title = 'OK';
+      }
+      if (callback == null) {
+        callback = null;
+      }
+      if (cancelar == null) {
+        cancelar = false;
+      }
+      if (callback_cancelar == null) {
+        callback_cancelar = null;
+      }
+      $("#" + this.id + " div.modal-body").html(body);
+      $("#" + this.id + " div.modal-footer button.btn-primary").html(button_title);
+      if (!cancelar) {
+        $("#" + this.id + " div.modal-footer button.cancelar").hide();
+      } else {
+        $("#" + this.id + " div.modal-footer button.cancelar").show();
+      }
+      if (callback_cancelar) {
+        $("#" + this.id + " div.modal-footer button.cancelar").off('click');
+        $("#" + this.id + " div.modal-footer button.cancelar").on('click', callback_cancelar);
+      }
+      $("#" + this.id).off('hide.bs.modal');
+      return $("#" + this.id).on('hide.bs.modal', callback);
     };
 
     Popup.prototype.showMarcador = function() {
       var m;
-      m = this.sl.control.ultimo_marcador_clicado;
+      m = Controle.getIS(this.config).ultimo_marcador_clicado;
       if (m.slinfo.title) {
         this.setTitle(m.slinfo.title);
       } else {
@@ -25278,10 +25310,61 @@ L.MarkerClusterGroup.include({
 
   })();
 
+  ConfigFontes = (function() {
+    function ConfigFontes(d) {
+      var fonte, fontes_array, func, func_code, index, url, _i, _len;
+      this.fontes = [];
+      fontes_array = d.get('fontes', null);
+      if (!fontes_array) {
+        url = d.get('url', null);
+        if (!url) {
+          url = decodeURIComponent(getURLParameter("data"));
+        }
+        func = function(item) {
+          return item;
+        };
+        func_code = d.get('convert', func);
+        this.addFonte({
+          url: url,
+          func_code: func_code
+        });
+      } else {
+        for (index = _i = 0, _len = fontes_array.length; _i < _len; index = ++_i) {
+          fonte = fontes_array[index];
+          this.addFonte(fonte);
+        }
+      }
+    }
+
+    ConfigFontes.prototype.addFonte = function(fonte) {
+      if (fonte.url && typeof fonte.func_code === 'function') {
+        return this.fontes.push(fonte);
+      } else {
+        return console.error("Error de configuração de fonte:", fonte);
+      }
+    };
+
+    ConfigFontes.prototype.getFontes = function() {
+      return this.fontes;
+    };
+
+    ConfigFontes.prototype.updateFonte = function(fonte, id) {
+      return this.fontes[id] = fonte;
+    };
+
+    ConfigFontes.prototype.getFonte = function(i) {
+      return this.fontes[i];
+    };
+
+    return ConfigFontes;
+
+  })();
+
   Config = (function() {
     function Config(opcoes) {
-      var d, func;
+      var d;
       d = new Dicionario(opcoes);
+      this.d = d;
       this.container_id = d.get('container_id', 'map');
       this.tab_id = "tab-" + this.container_id;
       this.map_id = "map-" + this.container_id;
@@ -25292,14 +25375,7 @@ L.MarkerClusterGroup.include({
       this.clusterizar = d.get('clusterizar', true);
       this.useBsPopup = d.get('useBsPopup', true);
       this.urlosm = d.get('url_osm', "http://{s}.tile.osm.org/{z}/{x}/{y}.png");
-      this.url = d.get('url', null);
-      if (!this.url) {
-        this.url = decodeURIComponent(getURLParameter("data"));
-      }
-      func = function(item) {
-        return item;
-      };
-      this.func_convert = d.get('convert', func);
+      this.fontes = new ConfigFontes(d);
     }
 
     Config.prototype.getJSON = function() {
@@ -25310,8 +25386,7 @@ L.MarkerClusterGroup.include({
         'clusterizar': this.clusterizar,
         'useBsPopup': this.useBsPopup,
         'url_osm': this.urlosm,
-        'url': this.url,
-        'convert': this.func_convert
+        'fontes': this.fontes.getFontes()
       };
     };
 
@@ -25405,6 +25480,12 @@ L.MarkerClusterGroup.include({
   });
 
   Controle = (function() {
+    Controle.instances = {};
+
+    Controle.getIS = function(config) {
+      return Controle.instances[config.container_id];
+    };
+
     function Controle(sl) {
       this.carregaDados = __bind(this.carregaDados, this);
       this.update = __bind(this.update, this);
@@ -25417,6 +25498,7 @@ L.MarkerClusterGroup.include({
       this.registraEventosCamadaAnalise = __bind(this.registraEventosCamadaAnalise, this);
       this.show_opcoes = __bind(this.show_opcoes, this);
       this.hide_opcoes = __bind(this.hide_opcoes, this);
+      Controle.instances[sl.config.container_id] = this;
       this.sl = sl;
       this.sl.map.addControl(new SLControl());
       this.sl.map.addControl(new SLUndoRedoControl());
@@ -25600,14 +25682,24 @@ L.MarkerClusterGroup.include({
   })();
 
   Dados = (function() {
+    Dados.instances = {};
+
+    Dados.getIS = function(config) {
+      return Dados.instances[config.container_id];
+    };
+
     function Dados(sl) {
       this.addMarkersTo = __bind(this.addMarkersTo, this);
       this.catAddMarkers = __bind(this.catAddMarkers, this);
       this.getCatLatLng = __bind(this.getCatLatLng, this);
       this.addItem = __bind(this.addItem, this);
       this._getCatOrCreate = __bind(this._getCatOrCreate, this);
+      this.get_data = __bind(this.get_data, this);
+      this.get_data_fonte = __bind(this.get_data_fonte, this);
       this.clear = __bind(this.clear, this);
+      Dados.instances[sl.config.container_id] = this;
       this.sl = sl;
+      this.config = sl.config;
       this.clear();
     }
 
@@ -25615,6 +25707,69 @@ L.MarkerClusterGroup.include({
       this.marcadores = [];
       this.categorias = {};
       return this.categorias_id = {};
+    };
+
+    Dados.prototype.get_data_fonte = function(fonte) {
+      if (fonte.url.indexOf("docs.google.com/spreadsheet") > -1) {
+        return Tabletop.init({
+          'key': fonte.url,
+          'callback': (function(_this) {
+            return function(data) {
+              return _this.carregaDados(data);
+            };
+          })(this),
+          'simpleSheet': true
+        });
+      } else {
+        if (fonte.url.slice(0, 4) === "http") {
+          if (fonte.url.slice(-4) === ".csv") {
+            return Papa.parse(fonte.url, {
+              header: true,
+              download: true,
+              complete: (function(_this) {
+                return function(results, file) {
+                  return _this.carregaDados(results['data']);
+                };
+              })(this)
+            });
+          } else {
+            return getJSONP(fonte.url, (function(_this) {
+              return function(data) {
+                return _this.carregaDados(data);
+              };
+            })(this));
+          }
+        } else {
+          return getJSON(fonte.url, (function(_this) {
+            return function(data) {
+              return _this.carregaDados(data);
+            };
+          })(this));
+        }
+      }
+    };
+
+    Dados.prototype.get_data = function() {
+      var fonte, obj;
+      obj = this;
+      $(this.config.container_id).trigger("dados:carregando");
+      fonte = this.config.fontes.getFonte("0");
+      return this.get_data_fonte(fonte);
+    };
+
+    Dados.prototype.carregaDados = function(data) {
+      return this.sl.carregaDados(data);
+    };
+
+    Dados.prototype.getItensCount = function() {
+      var cat, itens, _i, _len, _ref;
+      itens = 0;
+      _ref = this.getCategorias();
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        cat = _ref[_i];
+        itens += this.getCatByName(cat).length;
+      }
+      return itens;
     };
 
     Dados.prototype.getCatByName = function(cat_name) {
@@ -25691,6 +25846,156 @@ L.MarkerClusterGroup.include({
     };
 
     return Dados;
+
+  })();
+
+  PopupFontes = (function() {
+    function PopupFontes(config) {
+      this.idUrl = config.container_id + '-url';
+      this.idFunc = config.container_id + '-func';
+      this.popup = Popup.getIS(config);
+    }
+
+    PopupFontes.prototype.setFonte = function(fonte, i) {
+      if (fonte == null) {
+        fonte = null;
+      }
+      if (i == null) {
+        i = null;
+      }
+      if (i === null) {
+        this.fonte = {
+          url: '',
+          func_code: ''
+        };
+      } else {
+        this.fonte = fonte;
+      }
+      return this.fonte_id = i;
+    };
+
+    PopupFontes.prototype.renderPopup = function(callback, oktext) {
+      var html, self;
+      if (callback == null) {
+        callback = null;
+      }
+      if (oktext == null) {
+        oktext = 'Adicionar';
+      }
+      html = "<div class='form-group'> <label for='" + this.idUrl + "' class='control-label'>URL</label> <input type='url' class='form-control' value='" + this.fonte.url + "' id='" + this.idUrl + "' placeholder='informe o endereço público dos dados'> <p class='help-block'>Formatos aceitos: json, jsonp, csv e google spreadsheet.</p> <label for='" + this.idFunc + "' class='control-label'>Código da função de conversão</label> <textarea rows='6' type='text' class='form-control' id='" + this.idFunc + "' placeholder='código para converter os dados no formato do searchlight'>" + this.fonte.func_code + "</textarea> <br/> </div>";
+      this.popup.setTitle('Cadastrar Fonte de Dados');
+      self = this;
+      this.popup.setBody(html, oktext, function(e) {
+        return self.popupValidate(e);
+      }, true, function(e) {
+        return self.popupCancel(e);
+      });
+      this.popup.show();
+      return this.popupValido = false;
+    };
+
+    PopupFontes.prototype.saveFonte = function(url, func_code) {
+      if (this.fonte_id >= 0) {
+        this.fonte.url = url;
+        return this.fonte.func_code = func_code;
+      } else {
+        return this.config.fontes.addFonte({
+          url: url,
+          func_code: func_code
+        });
+      }
+    };
+
+    PopupFontes.prototype.popupValidate = function(e) {
+      var func_code, func_name, url;
+      url = $("#" + this.idUrl).val();
+      if (url) {
+        func_code = $("#" + this.idFunc).val();
+        try {
+          func_name = "sl" + ((new Date()).getTime());
+          eval("" + func_name + " = " + func_code);
+          func_code = eval(func_name);
+          this.popupValido = true;
+          this.saveFonte(url, func_code);
+        } catch (_error) {
+          e = _error;
+          alert(e.toString());
+        }
+      }
+      if (!this.popupValido) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
+      } else {
+        return true;
+      }
+    };
+
+    PopupFontes.prototype.popupCancel = function(e) {
+      this.popupValido = true;
+      return true;
+    };
+
+    return PopupFontes;
+
+  })();
+
+  FormOpcoes = (function() {
+    function FormOpcoes(config) {
+      this.idUrlOSM = config.container_id + '-urlosm';
+      this.config = config;
+      this.idClusterizar = this.config.container_id + '-clusterizar';
+      this.idFontesDados = this.config.container_id + '-ulFontesDados';
+      this.popupFontes = new PopupFontes(config);
+    }
+
+    FormOpcoes.prototype.render = function() {
+      var fonte, html, i, _i, _len, _ref;
+      html = "<form > <br> <fieldset> <legend>Fontes de dados</legend> <div class='form-group'> <ul class='list-group' id=" + this.idFontesDados + "'>";
+      _ref = this.config.fontes.getFontes();
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        fonte = _ref[i];
+        html += "<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='" + i + "' href='#'>Alterar</a> | <a class='link-remover'data-fonte='" + i + "' href='#'>Remover</a></span> <a href='" + fonte.url + "' target='_blank'>" + fonte.url + "</a></span></li>";
+      }
+      html += "</ul> <button type='button' class='btn btn-primary searchlight-btn-add-fonte'>Adicionar fonte</button> </div> </fieldset> <fieldset> <legend>Opções do Mapa</legend> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> </fieldset> <fieldset> <button type='submit' class='btn btn-default searchlight-btn-salvar'>Salvar</button> </fieldset> </form>";
+      $("#" + this.config.opcoes_id).html(html);
+      return this.bind();
+    };
+
+    FormOpcoes.prototype.bind = function() {
+      var self;
+      self = this;
+      $("#" + this.idClusterizar).on('change', function(ev) {
+        return self.config.clusterizar = this.checked;
+      });
+      $("#" + this.idUrlOSM).on('change', function(ev) {
+        return self.config.urlosm = $(this).val();
+      });
+      $("#" + this.idUrl).on('change', function(ev) {
+        return self.config.url = $(this).val();
+      });
+      $("button.searchlight-btn-salvar").on('click', (function(_this) {
+        return function(ev) {
+          var searchlight;
+          return searchlight = new Searchlight(_this.config.getJSON());
+        };
+      })(this));
+      $("#" + this.config.opcoes_id + " button.searchlight-btn-add-fonte").on('click', (function(_this) {
+        return function(ev) {
+          _this.popupFontes.setFonte(null, null);
+          return _this.popupFontes.renderPopup(fonte);
+        };
+      })(this));
+      return $("#" + this.config.opcoes_id + " a.link-alterar").on('click', function(ev) {
+        var fonte, id_fonte;
+        id_fonte = $(this).data('fonte');
+        fonte = self.config.fontes.getFonte(id_fonte);
+        self.popupFontes.setFonte(fonte, id_fonte);
+        return self.popupFontes.renderPopup(null, 'Alterar');
+      });
+    };
+
+    return FormOpcoes;
 
   })();
 
@@ -25778,70 +26083,17 @@ L.MarkerClusterGroup.include({
 
   })();
 
-  FormOpcoes = (function() {
-    function FormOpcoes(tabOpcoes) {
-      this.tabOpcoes = tabOpcoes;
-      this.idUrlOSM = this.tabOpcoes.sl.config.container_id + '-urlosm';
-      this.idUrl = this.tabOpcoes.sl.config.container_id + '-url';
-      this.idClusterizar = this.tabOpcoes.sl.config.container_id + '-clusterizar';
-    }
-
-    FormOpcoes.prototype.render = function() {
-      var html;
-      html = "<form> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.tabOpcoes.sl.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='form-group'> <label for='url'>URL de dados</label> <input type='url' class='form-control' value='" + this.tabOpcoes.sl.config.url + "}id='" + this.idUrl + "' placeholder='informe o endereço público dos dados'> <p class='help-block'>Formatos aceitos: json, jsonp, csv e google spreadsheet.</p> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.tabOpcoes.sl.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> <button type='submit' class='btn btn-default searchlight-btn-salvar'>Salvar</button> </form>";
-      $("#" + this.tabOpcoes.opcoes_id).html(html);
-      return this.bind();
-    };
-
-    FormOpcoes.prototype.bind = function() {
-      var self;
-      self = this;
-      $("#" + this.idClusterizar).on('change', function(ev) {
-        return self.tabOpcoes.sl.config.clusterizar = this.checked;
-      });
-      $("#" + this.idUrlOSM).on('change', function(ev) {
-        return self.tabOpcoes.sl.config.urlosm = $(this).val();
-      });
-      $("#" + this.idUrl).on('change', function(ev) {
-        return self.tabOpcoes.sl.config.url = $(this).val();
-      });
-      return $("button.searchlight-btn-salvar").on('click', (function(_this) {
-        return function(ev) {
-          var searchlight;
-          return searchlight = new Searchlight(_this.tabOpcoes.sl.config.getJSON());
-        };
-      })(this));
-    };
-
-    return FormOpcoes;
-
-  })();
-
   TabOpcoes = (function() {
-    function TabOpcoes(opcoes_id, sl) {
-      this.sl = sl;
-      this.popup = this.sl.bsPopup;
-      this.opcoes_id = opcoes_id;
-      this.dados = sl.dados;
-      this.form = new FormOpcoes(this);
-      this.form.render();
+    function TabOpcoes(config) {
+      this.config = config;
+      this.popup = Popup.getIS(config);
+      this.dados = Dados.getIS(config);
+      this.form = new FormOpcoes(config);
     }
-
-    TabOpcoes.prototype._instancia = function() {
-      return "" + (this.sl.getIS()) + ".TabOpcoes";
-    };
 
     TabOpcoes.prototype.load = function() {
+      this.form.render();
       return console.log('TabOpcoes carregado');
-    };
-
-    TabOpcoes.prototype.open = function(i, cat_name) {
-      var obj;
-      obj = this.dados.getCatByName(cat_name)[i];
-      this.popup.setTitle(obj.cat);
-      this.popup.setBody(obj.texto);
-      this.popup.show();
-      return false;
     };
 
     return TabOpcoes;
@@ -26036,7 +26288,6 @@ L.MarkerClusterGroup.include({
       this.addItem = __bind(this.addItem, this);
       this.carregaDados = __bind(this.carregaDados, this);
       this.autoZoom = __bind(this.autoZoom, this);
-      this.get_data = __bind(this.get_data, this);
       this.create = __bind(this.create, this);
       this.getIS = __bind(this.getIS, this);
       this.config = new Config(opcoes);
@@ -26044,8 +26295,8 @@ L.MarkerClusterGroup.include({
       this.create();
       this.dados = new Dados(this);
       this.tabList = new TabList(this.config.lista_id, this);
-      this.tabOpcoes = new TabOpcoes(this.config.opcoes_id, this);
-      this.get_data();
+      this.tabOpcoes = new TabOpcoes(this.config);
+      this.dados.get_data();
     }
 
     Searchlight.prototype.getIS = function() {
@@ -26054,7 +26305,7 @@ L.MarkerClusterGroup.include({
 
     Searchlight.prototype.create = function() {
       $("#" + this.config.container_id).html("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.config.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.opcoes_id + "'>Opções</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.config.tab_id + "'><div id='" + this.config.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.config.lista_id + "' ><div class='searchlight-tap' id='" + this.config.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.config.opcoes_id + "' ><div class='searchlight-tab' id='" + this.config.opcoes_id + "'≳ </div> </div> </div> ");
-      this.bsPopup = new Popup(this, this.config.container_id);
+      this.bsPopup = new Popup(this.config);
       this.CamadaBasica = L.tileLayer(this.config.urlosm, {
         'attribution': attribution,
         'maxZoom': 18
@@ -26072,50 +26323,12 @@ L.MarkerClusterGroup.include({
         this.markers = new L.FeatureGroup();
       }
       this.map.addLayer(this.markers);
-      return this.control = new Controle(this);
-    };
-
-    Searchlight.prototype.get_data = function() {
-      var obj;
-      obj = this;
-      this.markers.fire("data:loading");
-      if (this.config.url.indexOf("docs.google.com/spreadsheet") > -1) {
-        return Tabletop.init({
-          'key': this.config.url,
-          'callback': (function(_this) {
-            return function(data) {
-              return _this.carregaDados(data);
-            };
-          })(this),
-          'simpleSheet': true
-        });
-      } else {
-        if (this.config.url.slice(0, 4) === "http") {
-          if (this.config.url.slice(-4) === ".csv") {
-            return Papa.parse(this.config.url, {
-              header: true,
-              download: true,
-              complete: (function(_this) {
-                return function(results, file) {
-                  return _this.carregaDados(results['data']);
-                };
-              })(this)
-            });
-          } else {
-            return getJSONP(this.config.url, (function(_this) {
-              return function(data) {
-                return _this.carregaDados(data);
-              };
-            })(this));
-          }
-        } else {
-          return getJSON(this.config.url, (function(_this) {
-            return function(data) {
-              return _this.carregaDados(data);
-            };
-          })(this));
-        }
-      }
+      this.control = new Controle(this);
+      return $(this.config.container_id).on('dados:carregando', (function(_this) {
+        return function() {
+          return _this.markers.fire("data:loading");
+        };
+      })(this));
     };
 
     Searchlight.prototype.autoZoom = function() {
@@ -26157,7 +26370,7 @@ L.MarkerClusterGroup.include({
     };
 
     Searchlight.prototype.addItem = function(item) {
-      return this.dados.addItem(item, this.config.func_convert);
+      return this.dados.addItem(item, this.config.fontes.getFonte(0).func_code);
     };
 
     Searchlight.prototype.mostrarCamadaMarkers = function() {
@@ -26174,6 +26387,8 @@ L.MarkerClusterGroup.include({
     return Searchlight;
 
   })();
+
+  Searchlight.Popup = Popup;
 
   window.Searchlight = Searchlight;
 
