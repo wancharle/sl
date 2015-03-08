@@ -8,6 +8,7 @@ class Controle
     Controle.instances[sl.config.container_id] = @
 
     @sl = sl
+    @config = sl.config
     @sl.map.addControl(new SLControl())
     @sl.map.addControl(new SLUndoRedoControl())
     @id_control = "#"+@sl.config.map_id+" div.searchlight-control"
@@ -31,10 +32,9 @@ class Controle
             @clusterCtr.mostraPopup()
 
         @atualizarIconesMarcVisiveis()
-        if @sl.carregando
-            @sl.carregando = false
-            if window['onSLcarregaDados'] != undefined
-                onSLcarregaDados(@sl)
+        if @sl.executandoZoomDeCarregamento
+            @sl.executandoZoomDeCarregamento = false
+            $("##{@config.container_id}").trigger('mapa:carregado')
 
     )
    
@@ -111,6 +111,7 @@ class Controle
       if Object.keys(@sl.dados.categorias).length > 1
           op ="#"+map_id+ " div.searchlight-opcoes"
           ul =op + " ul"
+          $(op).html("<ul></ul>")
           cats = []
           for k of  @sl.dados.categorias
               cats.push([k,@sl.dados.categorias[k].length])

@@ -1,10 +1,18 @@
 
+
 window.getJSONP= (url,func)->
-  $.ajax({ 'url': url, 'success': func, 'type':"POST", 'dataType': 'jsonp'})
+  $.ajax({ 
+    'url': url, 'success': func,
+    'error': (e,ee)-> 
+      if ee == "error"
+        alert('Erro ao baixar dados JSONP da fonte de dados\n'+url) 
+    ,
+    'type':"POST", 'dataType': 'jsonp'})
 
 
 window.getJSON= (url,func)->
-  $.ajax({ 'url': url, 'success': func, 'dataType': "json", 'beforeSend': (xhr) ->
+  $.ajax({ 'url': url, 'success': func, 'error': ()-> alert('Erro ao baixar dados JSONP da fonte de dados\n'+url) ,
+  'dataType': "json", 'beforeSend': (xhr) ->
       if (xhr.overrideMimeType)
           xhr.overrideMimeType("application/json")
   ,'contentType': 'application/json','mimeType': "textPlain"})

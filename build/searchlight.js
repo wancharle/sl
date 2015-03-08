@@ -24981,7 +24981,7 @@ L.MarkerClusterGroup.include({
 
 }(window, document));
 (function() {
-  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, ConfigFontes, Controle, Dados, Dicionario, FormOpcoes, Marcador, PilhaDeZoom, Popup, PopupFontes, SENADO_FEDERAL, Searchlight, TabList, TabOpcoes, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
+  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, ConfigFontes, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, Popup, PopupFontes, SENADO_FEDERAL, Searchlight, TabConfiguracoes, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -25348,7 +25348,12 @@ L.MarkerClusterGroup.include({
       return this.fontes;
     };
 
-    ConfigFontes.prototype.updateFonte = function(fonte, id) {
+    ConfigFontes.prototype.updateFonte = function(url, func_code, id) {
+      var fonte;
+      fonte = {
+        url: url,
+        func_code: func_code
+      };
       return this.fontes[id] = fonte;
     };
 
@@ -25369,7 +25374,7 @@ L.MarkerClusterGroup.include({
       this.tab_id = "tab-" + this.container_id;
       this.map_id = "map-" + this.container_id;
       this.lista_id = "lista-" + this.container_id;
-      this.opcoes_id = "opcoes-" + this.container_id;
+      this.configuracoes_id = "configuracoes-" + this.container_id;
       this.Icones = d.get('icones', null);
       this.esconder_icones = d.get('esconder_icones', true);
       this.clusterizar = d.get('clusterizar', true);
@@ -25378,7 +25383,7 @@ L.MarkerClusterGroup.include({
       this.fontes = new ConfigFontes(d);
     }
 
-    Config.prototype.getJSON = function() {
+    Config.prototype.toJSON = function() {
       return {
         'container_id': this.container_id,
         'icones': this.icones,
@@ -25500,6 +25505,7 @@ L.MarkerClusterGroup.include({
       this.hide_opcoes = __bind(this.hide_opcoes, this);
       Controle.instances[sl.config.container_id] = this;
       this.sl = sl;
+      this.config = sl.config;
       this.sl.map.addControl(new SLControl());
       this.sl.map.addControl(new SLUndoRedoControl());
       this.id_control = "#" + this.sl.config.map_id + " div.searchlight-control";
@@ -25521,11 +25527,9 @@ L.MarkerClusterGroup.include({
             _this.clusterCtr.mostraPopup();
           }
           _this.atualizarIconesMarcVisiveis();
-          if (_this.sl.carregando) {
-            _this.sl.carregando = false;
-            if (window['onSLcarregaDados'] !== void 0) {
-              return onSLcarregaDados(_this.sl);
-            }
+          if (_this.sl.executandoZoomDeCarregamento) {
+            _this.sl.executandoZoomDeCarregamento = false;
+            return $("#" + _this.config.container_id).trigger('mapa:carregado');
           }
         };
       })(this));
@@ -25634,6 +25638,7 @@ L.MarkerClusterGroup.include({
       if (Object.keys(this.sl.dados.categorias).length > 1) {
         op = "#" + map_id + " div.searchlight-opcoes";
         ul = op + " ul";
+        $(op).html("<ul></ul>");
         cats = [];
         for (k in this.sl.dados.categorias) {
           cats.push([k, this.sl.dados.categorias[k].length]);
@@ -25715,7 +25720,7 @@ L.MarkerClusterGroup.include({
           'key': fonte.url,
           'callback': (function(_this) {
             return function(data) {
-              return _this.carregaDados(data);
+              return _this.carregaDados(data, fonte);
             };
           })(this),
           'simpleSheet': true
@@ -25726,23 +25731,26 @@ L.MarkerClusterGroup.include({
             return Papa.parse(fonte.url, {
               header: true,
               download: true,
+              error: function() {
+                return alert("Erro ao baixar arquivo csv da fonte de dados:\n" + fonte.url);
+              },
               complete: (function(_this) {
                 return function(results, file) {
-                  return _this.carregaDados(results['data']);
+                  return _this.carregaDados(results['data'], fonte);
                 };
               })(this)
             });
           } else {
             return getJSONP(fonte.url, (function(_this) {
               return function(data) {
-                return _this.carregaDados(data);
+                return _this.carregaDados(data, fonte);
               };
             })(this));
           }
         } else {
           return getJSON(fonte.url, (function(_this) {
             return function(data) {
-              return _this.carregaDados(data);
+              return _this.carregaDados(data, fonte);
             };
           })(this));
         }
@@ -25750,15 +25758,37 @@ L.MarkerClusterGroup.include({
     };
 
     Dados.prototype.get_data = function() {
-      var fonte, obj;
+      var fonte, i, obj, _i, _len, _ref, _results;
       obj = this;
+      this.fontes_carregadas = [];
       $(this.config.container_id).trigger("dados:carregando");
-      fonte = this.config.fontes.getFonte("0");
-      return this.get_data_fonte(fonte);
+      _ref = this.config.fontes.getFontes();
+      _results = [];
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        fonte = _ref[i];
+        _results.push(this.get_data_fonte(fonte));
+      }
+      return _results;
     };
 
-    Dados.prototype.carregaDados = function(data) {
-      return this.sl.carregaDados(data);
+    Dados.prototype.carregaDados = function(data, fonte) {
+      var d, e, i, _i, _len;
+      this.fontes_carregadas.push(fonte);
+      try {
+        for (i = _i = 0, _len = data.length; _i < _len; i = ++_i) {
+          d = data[i];
+          this.addItem(d, fonte.func_code);
+        }
+      } catch (_error) {
+        e = _error;
+        console.error(e.toString());
+        this.markers.fire("data:loaded");
+        alert("Não foi possivel carregar os dados do mapa. Verifique se a fonte de dados está formatada corretamente.");
+        return;
+      }
+      if (this.fontes_carregadas.length === this.config.fontes.getFontes().length) {
+        return $("#" + this.config.container_id).trigger('dados:carregados');
+      }
     };
 
     Dados.prototype.getItensCount = function() {
@@ -25792,7 +25822,7 @@ L.MarkerClusterGroup.include({
       var cat, geoItem, m;
       geoItem = func_convert(i);
       if (geoItem) {
-        m = new Marcador(geoItem, this.sl.getIS());
+        m = new Marcador(geoItem, this.config);
         cat = this._getCatOrCreate(m);
         return cat.push(m);
       }
@@ -25849,167 +25879,25 @@ L.MarkerClusterGroup.include({
 
   })();
 
-  PopupFontes = (function() {
-    function PopupFontes(config) {
-      this.idUrl = config.container_id + '-url';
-      this.idFunc = config.container_id + '-func';
-      this.popup = Popup.getIS(config);
-    }
-
-    PopupFontes.prototype.setFonte = function(fonte, i) {
-      if (fonte == null) {
-        fonte = null;
-      }
-      if (i == null) {
-        i = null;
-      }
-      if (i === null) {
-        this.fonte = {
-          url: '',
-          func_code: ''
-        };
-      } else {
-        this.fonte = fonte;
-      }
-      return this.fonte_id = i;
-    };
-
-    PopupFontes.prototype.renderPopup = function(callback, oktext) {
-      var html, self;
-      if (callback == null) {
-        callback = null;
-      }
-      if (oktext == null) {
-        oktext = 'Adicionar';
-      }
-      html = "<div class='form-group'> <label for='" + this.idUrl + "' class='control-label'>URL</label> <input type='url' class='form-control' value='" + this.fonte.url + "' id='" + this.idUrl + "' placeholder='informe o endereço público dos dados'> <p class='help-block'>Formatos aceitos: json, jsonp, csv e google spreadsheet.</p> <label for='" + this.idFunc + "' class='control-label'>Código da função de conversão</label> <textarea rows='6' type='text' class='form-control' id='" + this.idFunc + "' placeholder='código para converter os dados no formato do searchlight'>" + this.fonte.func_code + "</textarea> <br/> </div>";
-      this.popup.setTitle('Cadastrar Fonte de Dados');
-      self = this;
-      this.popup.setBody(html, oktext, function(e) {
-        return self.popupValidate(e);
-      }, true, function(e) {
-        return self.popupCancel(e);
-      });
-      this.popup.show();
-      return this.popupValido = false;
-    };
-
-    PopupFontes.prototype.saveFonte = function(url, func_code) {
-      if (this.fonte_id >= 0) {
-        this.fonte.url = url;
-        return this.fonte.func_code = func_code;
-      } else {
-        return this.config.fontes.addFonte({
-          url: url,
-          func_code: func_code
-        });
-      }
-    };
-
-    PopupFontes.prototype.popupValidate = function(e) {
-      var func_code, func_name, url;
-      url = $("#" + this.idUrl).val();
-      if (url) {
-        func_code = $("#" + this.idFunc).val();
-        try {
-          func_name = "sl" + ((new Date()).getTime());
-          eval("" + func_name + " = " + func_code);
-          func_code = eval(func_name);
-          this.popupValido = true;
-          this.saveFonte(url, func_code);
-        } catch (_error) {
-          e = _error;
-          alert(e.toString());
-        }
-      }
-      if (!this.popupValido) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        return false;
-      } else {
-        return true;
-      }
-    };
-
-    PopupFontes.prototype.popupCancel = function(e) {
-      this.popupValido = true;
-      return true;
-    };
-
-    return PopupFontes;
-
-  })();
-
-  FormOpcoes = (function() {
-    function FormOpcoes(config) {
-      this.idUrlOSM = config.container_id + '-urlosm';
-      this.config = config;
-      this.idClusterizar = this.config.container_id + '-clusterizar';
-      this.idFontesDados = this.config.container_id + '-ulFontesDados';
-      this.popupFontes = new PopupFontes(config);
-    }
-
-    FormOpcoes.prototype.render = function() {
-      var fonte, html, i, _i, _len, _ref;
-      html = "<form > <br> <fieldset> <legend>Fontes de dados</legend> <div class='form-group'> <ul class='list-group' id=" + this.idFontesDados + "'>";
-      _ref = this.config.fontes.getFontes();
-      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-        fonte = _ref[i];
-        html += "<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='" + i + "' href='#'>Alterar</a> | <a class='link-remover'data-fonte='" + i + "' href='#'>Remover</a></span> <a href='" + fonte.url + "' target='_blank'>" + fonte.url + "</a></span></li>";
-      }
-      html += "</ul> <button type='button' class='btn btn-primary searchlight-btn-add-fonte'>Adicionar fonte</button> </div> </fieldset> <fieldset> <legend>Opções do Mapa</legend> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> </fieldset> <fieldset> <button type='submit' class='btn btn-default searchlight-btn-salvar'>Salvar</button> </fieldset> </form>";
-      $("#" + this.config.opcoes_id).html(html);
-      return this.bind();
-    };
-
-    FormOpcoes.prototype.bind = function() {
-      var self;
-      self = this;
-      $("#" + this.idClusterizar).on('change', function(ev) {
-        return self.config.clusterizar = this.checked;
-      });
-      $("#" + this.idUrlOSM).on('change', function(ev) {
-        return self.config.urlosm = $(this).val();
-      });
-      $("#" + this.idUrl).on('change', function(ev) {
-        return self.config.url = $(this).val();
-      });
-      $("button.searchlight-btn-salvar").on('click', (function(_this) {
-        return function(ev) {
-          var searchlight;
-          return searchlight = new Searchlight(_this.config.getJSON());
-        };
-      })(this));
-      $("#" + this.config.opcoes_id + " button.searchlight-btn-add-fonte").on('click', (function(_this) {
-        return function(ev) {
-          _this.popupFontes.setFonte(null, null);
-          return _this.popupFontes.renderPopup(fonte);
-        };
-      })(this));
-      return $("#" + this.config.opcoes_id + " a.link-alterar").on('click', function(ev) {
-        var fonte, id_fonte;
-        id_fonte = $(this).data('fonte');
-        fonte = self.config.fontes.getFonte(id_fonte);
-        self.popupFontes.setFonte(fonte, id_fonte);
-        return self.popupFontes.renderPopup(null, 'Alterar');
-      });
-    };
-
-    return FormOpcoes;
-
-  })();
-
   TabList = (function() {
-    function TabList(lista_id, sl) {
-      this.sl = sl;
-      this.popup = this.sl.bsPopup;
-      this.lista_id = lista_id;
-      this.dados = this.sl.dados;
-    }
+    TabList.instances = {};
 
-    TabList.prototype._instancia = function() {
-      return "" + (this.sl.getIS()) + ".tabList";
+    TabList.getIS = function(config) {
+      return TabList.instances[config.container_id];
     };
+
+    function TabList(config) {
+      this.config = config;
+      TabList.instances[this.config.container_id] = this;
+      this.popup = Popup.getIS(config);
+      this.lista_id = this.config.lista_id;
+      this.dados = Dados.getIS(config);
+      $("#" + this.config.container_id).on('dados:carregados', (function(_this) {
+        return function() {
+          return _this.load();
+        };
+      })(this));
+    }
 
     TabList.prototype.load = function() {
       var cat_name, html, i, obj, _i, _j, _len, _len1, _ref, _ref1;
@@ -26020,7 +25908,7 @@ L.MarkerClusterGroup.include({
         _ref1 = this.dados.getCatByName(cat_name);
         for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
           obj = _ref1[i];
-          html = "" + html + "<tr><td><a href=\"javascript:void(0);\" onclick='javascript:" + (this._instancia()) + ".open(" + i + ",\"" + cat_name + "\");false;'> " + cat_name + "</a></td><td>" + obj.texto + "</td></tr>";
+          html = "" + html + "<tr><td><a href=\"javascript:void(0);\" onclick='javascript:" + (TabList.getIS(this.config)) + ".open(" + i + ",\"" + cat_name + "\");false;'> " + cat_name + "</a></td><td>" + obj.texto + "</td></tr>";
         }
       }
       html = "" + html + "</table>";
@@ -26042,10 +25930,11 @@ L.MarkerClusterGroup.include({
   })();
 
   Marcador = (function() {
-    function Marcador(geoItem, instanceString) {
+    function Marcador(geoItem, config) {
       this.getMark = __bind(this.getMark, this);
       this.m = null;
-      this.instanceString = instanceString;
+      this.config = config;
+      this.instanceString = "SL(\"" + this.config.map_id + "\")";
       this.latitude = parseFloat(geoItem.latitude.replace(',', '.'));
       this.longitude = parseFloat(geoItem.longitude.replace(',', '.'));
       this.texto = geoItem.texto;
@@ -26080,23 +25969,6 @@ L.MarkerClusterGroup.include({
     };
 
     return Marcador;
-
-  })();
-
-  TabOpcoes = (function() {
-    function TabOpcoes(config) {
-      this.config = config;
-      this.popup = Popup.getIS(config);
-      this.dados = Dados.getIS(config);
-      this.form = new FormOpcoes(config);
-    }
-
-    TabOpcoes.prototype.load = function() {
-      this.form.render();
-      return console.log('TabOpcoes carregado');
-    };
-
-    return TabOpcoes;
 
   })();
 
@@ -26227,6 +26099,100 @@ L.MarkerClusterGroup.include({
 
   })();
 
+  PopupFontes = (function() {
+    function PopupFontes(config) {
+      this.idUrl = config.container_id + '-url';
+      this.idFunc = config.container_id + '-func';
+      this.popup = Popup.getIS(config);
+      this.config = config;
+    }
+
+    PopupFontes.prototype.setFonte = function(fonte, i) {
+      if (fonte == null) {
+        fonte = null;
+      }
+      if (i == null) {
+        i = null;
+      }
+      if (i === null) {
+        this.fonte = {
+          url: '',
+          func_code: ''
+        };
+      } else {
+        this.fonte = fonte;
+      }
+      return this.fonte_id = i;
+    };
+
+    PopupFontes.prototype.renderPopup = function(callback, oktext) {
+      var html, self;
+      if (callback == null) {
+        callback = null;
+      }
+      if (oktext == null) {
+        oktext = 'Adicionar';
+      }
+      html = "<div class='form-group'> <label for='" + this.idUrl + "' class='control-label'>URL</label> <input type='url' class='form-control' value='" + this.fonte.url + "' id='" + this.idUrl + "' placeholder='informe o endereço público dos dados'> <p class='help-block'>Formatos aceitos: json, jsonp, csv e google spreadsheet.</p> <label for='" + this.idFunc + "' class='control-label'>Código da função de conversão</label> <textarea rows='6' type='text' class='form-control' id='" + this.idFunc + "' placeholder='código para converter os dados no formato do searchlight'>" + this.fonte.func_code + "</textarea> <br/> </div>";
+      this.popup.setTitle('Cadastrar Fonte de Dados');
+      self = this;
+      this.popup.setBody(html, oktext, function(e) {
+        return self.popupValidate(e);
+      }, true, function(e) {
+        return self.popupCancel(e);
+      });
+      this.popup.show();
+      return this.popupValido = false;
+    };
+
+    PopupFontes.prototype.saveFonte = function(url, func_code) {
+      if (this.fonte_id >= 0 && this.fonte_id !== null) {
+        this.fonte.url = url;
+        this.fonte.func_code = func_code;
+      } else {
+        console.log('adicionando  nova fonte');
+        this.config.fontes.addFonte({
+          url: url,
+          func_code: func_code
+        });
+      }
+      return $("#" + this.config.container_id).trigger("fontes:update");
+    };
+
+    PopupFontes.prototype.popupValidate = function(e) {
+      var func_code, func_name, url;
+      url = $("#" + this.idUrl).val();
+      if (url) {
+        func_code = $("#" + this.idFunc).val();
+        try {
+          func_name = "sl" + ((new Date()).getTime());
+          eval("" + func_name + " = " + func_code);
+          func_code = eval(func_name);
+          this.popupValido = true;
+          this.saveFonte(url, func_code);
+        } catch (_error) {
+          e = _error;
+          alert(e.toString());
+        }
+      }
+      if (!this.popupValido) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
+      } else {
+        return true;
+      }
+    };
+
+    PopupFontes.prototype.popupCancel = function(e) {
+      this.popupValido = true;
+      return true;
+    };
+
+    return PopupFontes;
+
+  })();
+
   L.Icon.Default.imagePath = "images/leaflet";
 
   SENADO_FEDERAL = [-15.799088, -47.865350];
@@ -26285,8 +26251,6 @@ L.MarkerClusterGroup.include({
       }
       this.esconderCamadaMarkers = __bind(this.esconderCamadaMarkers, this);
       this.mostrarCamadaMarkers = __bind(this.mostrarCamadaMarkers, this);
-      this.addItem = __bind(this.addItem, this);
-      this.carregaDados = __bind(this.carregaDados, this);
       this.autoZoom = __bind(this.autoZoom, this);
       this.create = __bind(this.create, this);
       this.getIS = __bind(this.getIS, this);
@@ -26294,8 +26258,8 @@ L.MarkerClusterGroup.include({
       sl_referencias[this.config.map_id] = this;
       this.create();
       this.dados = new Dados(this);
-      this.tabList = new TabList(this.config.lista_id, this);
-      this.tabOpcoes = new TabOpcoes(this.config);
+      this.tabList = new TabList(this.config);
+      this.tabConfiguracoes = new TabConfiguracoes(this.config);
       this.dados.get_data();
     }
 
@@ -26304,7 +26268,7 @@ L.MarkerClusterGroup.include({
     };
 
     Searchlight.prototype.create = function() {
-      $("#" + this.config.container_id).html("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.config.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.opcoes_id + "'>Opções</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.config.tab_id + "'><div id='" + this.config.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.config.lista_id + "' ><div class='searchlight-tap' id='" + this.config.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.config.opcoes_id + "' ><div class='searchlight-tab' id='" + this.config.opcoes_id + "'≳ </div> </div> </div> ");
+      $("#" + this.config.container_id).html("<ul class='nav nav-tabs' role='tablist'> <li class='active'><a data-toggle='tab' href='#" + this.config.tab_id + "'>Mapa</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.lista_id + "'>Lista</a></li> <li><a data-toggle='tab' href='#tab-" + this.config.configuracoes_id + "'>Configurações</a></li> </ul> <div class='tab-content'> <div class='tab-pane active' id='" + this.config.tab_id + "'><div id='" + this.config.map_id + "' > </div> </div> <div class='tab-pane' id='tab-" + this.config.lista_id + "' ><div class='searchlight-tab' id='" + this.config.lista_id + "'> </div> </div> <div class='tab-pane' id='tab-" + this.config.configuracoes_id + "' ><div class='searchlight-tab' id='" + this.config.configuracoes_id + "'> </div> </div> </div> ");
       this.bsPopup = new Popup(this.config);
       this.CamadaBasica = L.tileLayer(this.config.urlosm, {
         'attribution': attribution,
@@ -26324,53 +26288,34 @@ L.MarkerClusterGroup.include({
       }
       this.map.addLayer(this.markers);
       this.control = new Controle(this);
-      return $(this.config.container_id).on('dados:carregando', (function(_this) {
+      $("#" + this.config.container_id).on('dados:carregando', (function(_this) {
         return function() {
           return _this.markers.fire("data:loading");
+        };
+      })(this));
+      return $("#" + this.config.container_id).on('dados:carregados', (function(_this) {
+        return function() {
+          _this.markers.clearLayers();
+          _this.dados.addMarkersTo(_this.markers);
+          _this.control.addCatsToControl(_this.config.map_id);
+          _this.control.atualizarIconesMarcVisiveis();
+          if (_this.map.getBoundsZoom(_this.markers.getBounds()) === _this.map.getZoom()) {
+            _this.executandoZoomDeCarregamento = false;
+          } else {
+            _this.map.fitBounds(_this.markers.getBounds());
+            _this.executandoZoomDeCarregamento = true;
+          }
+          _this.markers.fire("data:loaded");
+          if (_this.executandoZoomDeCarregamento === false) {
+            $("#" + _this.config.container_id).trigger('mapa:carregado');
+          }
+          return _this.autoZoom();
         };
       })(this));
     };
 
     Searchlight.prototype.autoZoom = function() {
       return this.map.fitBounds(this.markers.getBounds());
-    };
-
-    Searchlight.prototype.carregaDados = function(data) {
-      var d, e, i, _i, _len;
-      try {
-        for (i = _i = 0, _len = data.length; _i < _len; i = ++_i) {
-          d = data[i];
-          this.addItem(d);
-        }
-      } catch (_error) {
-        e = _error;
-        console.log(e);
-        this.markers.fire("data:loaded");
-        alert("Não foi possivel carregar os dados do mapa. Verifique se a fonte de dados está formatada corretamente.");
-        return;
-      }
-      console.log('dados carregados');
-      this.markers.clearLayers();
-      this.dados.addMarkersTo(this.markers);
-      if (this.map.getBoundsZoom(this.markers.getBounds()) === this.map.getZoom()) {
-        this.carregando = false;
-      } else {
-        this.map.fitBounds(this.markers.getBounds());
-        this.carregando = true;
-      }
-      this.control.addCatsToControl(this.config.map_id);
-      this.tabList.load();
-      this.tabOpcoes.load();
-      this.markers.fire("data:loaded");
-      this.control.atualizarIconesMarcVisiveis();
-      if (this.carregando === false && window['onSLcarregaDados'] !== void 0) {
-        onSLcarregaDados(this);
-      }
-      return this.autoZoom();
-    };
-
-    Searchlight.prototype.addItem = function(item) {
-      return this.dados.addItem(item, this.config.fontes.getFonte(0).func_code);
     };
 
     Searchlight.prototype.mostrarCamadaMarkers = function() {
@@ -26392,10 +26337,87 @@ L.MarkerClusterGroup.include({
 
   window.Searchlight = Searchlight;
 
+  TabConfiguracoes = (function() {
+    function TabConfiguracoes(config) {
+      this.idUrlOSM = config.container_id + '-urlosm';
+      this.config = config;
+      this.idClusterizar = this.config.container_id + '-clusterizar';
+      this.idFontesDados = this.config.container_id + '-ulFontesDados';
+      this.popupFontes = new PopupFontes(config);
+      this.render();
+    }
+
+    TabConfiguracoes.prototype.renderFontes = function() {
+      var fonte, html, i, self, _i, _len, _ref;
+      html = "";
+      _ref = this.config.fontes.getFontes();
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        fonte = _ref[i];
+        html += "<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='" + i + "' href='#'>Alterar</a> | <a class='link-remover'data-fonte='" + i + "' href='#'>Remover</a></span> <a href='" + fonte.url + "' target='_blank'>" + fonte.url + "</a></span></li>";
+      }
+      $("#" + this.idFontesDados).html(html);
+      self = this;
+      return $("#" + this.config.configuracoes_id + " a.link-alterar").on('click', function(ev) {
+        var id_fonte;
+        id_fonte = $(this).data('fonte');
+        fonte = self.config.fontes.getFonte(id_fonte);
+        self.popupFontes.setFonte(fonte, id_fonte);
+        return self.popupFontes.renderPopup(null, 'Alterar');
+      });
+    };
+
+    TabConfiguracoes.prototype.render = function() {
+      var html;
+      html = "<form > <br> <fieldset> <legend>Fontes de dados</legend> <div class='form-group'> <ul class='list-group' id='" + this.idFontesDados + "'></ul> <button type='button' class='btn btn-primary searchlight-btn-add-fonte'>Adicionar fonte</button> </div> </fieldset> <fieldset> <legend>Opções do Mapa</legend> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> </fieldset> <fieldset> <button type='button' class='btn btn-default searchlight-btn-salvar'>Salvar</button> </fieldset> </form>";
+      $("#" + this.config.configuracoes_id).html(html);
+      this.renderFontes();
+      return this.bind();
+    };
+
+    TabConfiguracoes.prototype.bind = function() {
+      var self;
+      self = this;
+      $("#" + this.idClusterizar).on('change', function(ev) {
+        return self.config.clusterizar = this.checked;
+      });
+      $("#" + this.idUrlOSM).on('change', function(ev) {
+        return self.config.urlosm = $(this).val();
+      });
+      $("#" + this.idUrl).on('change', function(ev) {
+        return self.config.url = $(this).val();
+      });
+      $("#" + this.config.configuracoes_id + " button.searchlight-btn-salvar").on('click', (function(_this) {
+        return function(ev) {
+          var searchlight;
+          return searchlight = new Searchlight(_this.config.toJSON());
+        };
+      })(this));
+      $("#" + this.config.configuracoes_id + " button.searchlight-btn-add-fonte").on('click', (function(_this) {
+        return function(ev) {
+          _this.popupFontes.setFonte(null, null);
+          return _this.popupFontes.renderPopup();
+        };
+      })(this));
+      return $("#" + this.config.container_id).on("fontes:update", (function(_this) {
+        return function(ev) {
+          return _this.renderFontes();
+        };
+      })(this));
+    };
+
+    return TabConfiguracoes;
+
+  })();
+
   window.getJSONP = function(url, func) {
     return $.ajax({
       'url': url,
       'success': func,
+      'error': function(e, ee) {
+        if (ee === "error") {
+          return alert('Erro ao baixar dados JSONP da fonte de dados\n' + url);
+        }
+      },
       'type': "POST",
       'dataType': 'jsonp'
     });
@@ -26405,6 +26427,9 @@ L.MarkerClusterGroup.include({
     return $.ajax({
       'url': url,
       'success': func,
+      'error': function() {
+        return alert('Erro ao baixar dados JSONP da fonte de dados\n' + url);
+      },
       'dataType': "json",
       'beforeSend': function(xhr) {
         if (xhr.overrideMimeType) {

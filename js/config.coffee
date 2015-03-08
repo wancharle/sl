@@ -25,7 +25,8 @@ class ConfigFontes
   getFontes:() ->
     return @fontes
 
-  updateFonte: (fonte,id) ->
+  updateFonte: (url,func_code, id) ->
+    fonte = {url:url,func_code:func_code}
     @fontes[id]=fonte
 
   getFonte: (i) ->
@@ -42,7 +43,7 @@ class Config
     @tab_id = "tab-"+ @container_id
     @map_id = "map-"+ @container_id
     @lista_id = "lista-"+ @container_id
-    @opcoes_id = "opcoes-"+ @container_id
+    @configuracoes_id = "configuracoes-"+ @container_id
  
     @Icones =  d.get('icones', null)
     @esconder_icones =  d.get('esconder_icones', true)
@@ -54,7 +55,7 @@ class Config
     @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
     @fontes = new ConfigFontes(d)
    
-  getJSON: ()->
+  toJSON: ()->
     return {
       'container_id': @container_id
       'icones': @icones

@@ -19,7 +19,7 @@ class Dados
     # obtendo dados
     if fonte.url.indexOf("docs.google.com/spreadsheet") > -1 
       Tabletop.init( { 'key':fonte.url, 'callback':  (data)=>
-          @carregaDados(data)
+          @carregaDados(data,fonte)
       , 'simpleSheet': true } )
     else
       if fonte.url.slice(0,4)=="http"
@@ -27,28 +27,41 @@ class Dados
           Papa.parse(fonte.url, {
             header:true,
             download: true,
+            error: ()-> alert("Erro ao baixar arquivo csv da fonte de dados:\n#{fonte.url}"),
             complete: (results, file) =>
-              @carregaDados(results['data'])
+              @carregaDados(results['data'],fonte)
             })
 
         else
           getJSONP(fonte.url, (data)=>
-              @carregaDados(data)
+              @carregaDados(data,fonte)
           )
       else
         getJSON(fonte.url, (data) =>
-          @carregaDados(data)
+          @carregaDados(data,fonte)
         )
 
   get_data: () =>
     obj = this
+    @fontes_carregadas = []
     $(@config.container_id).trigger("dados:carregando")
-    fonte = @config.fontes.getFonte("0") # todo generalizar para mis de uma fonte.
-    @get_data_fonte(fonte)
+    for fonte, i in @config.fontes.getFontes()
+      #fonte = @config.fontes.getFonte("0") # todo generalizar para mis de uma fonte.
+      @get_data_fonte(fonte)
   
-  carregaDados: (data)->
-    @sl.carregaDados(data)
-
+  carregaDados: (data,fonte)->
+    @fontes_carregadas.push(fonte)
+    try
+      for d, i in data
+        @addItem(d,fonte.func_code)
+    catch e
+      console.error(e.toString())
+      @markers.fire("data:loaded")
+      alert("Não foi possivel carregar os dados do mapa. Verifique se a fonte de dados está formatada corretamente.")
+      return
+    if @fontes_carregadas.length == @config.fontes.getFontes().length
+      $("##{@config.container_id}").trigger('dados:carregados')
+  
   getItensCount:() ->
     # retorna o total de itens por url
     itens = 0
@@ -73,7 +86,7 @@ class Dados
   addItem : (i,func_convert) =>
     geoItem = func_convert(i)
     if geoItem
-      m =  new Marcador(geoItem,@sl.getIS())
+      m =  new Marcador(geoItem,@config)
       cat = @_getCatOrCreate(m)
       cat.push(m)
 

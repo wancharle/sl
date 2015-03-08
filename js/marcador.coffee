@@ -1,8 +1,9 @@
 
 class Marcador
-  constructor:(geoItem,instanceString)->
+  constructor:(geoItem,config)->
     @m = null
-    @instanceString = instanceString
+    @config = config
+    @instanceString = "SL(\"#{@config.map_id}\")"
     @latitude = parseFloat(geoItem.latitude.replace(',','.'))
     @longitude = parseFloat(geoItem.longitude.replace(',','.'))
     @texto = geoItem.texto

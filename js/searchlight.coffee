@@ -45,8 +45,8 @@ class Searchlight
     @create()
     
     @dados = new Dados(this)
-    @tabList = new TabList(@config.lista_id,this)
-    @tabOpcoes = new TabOpcoes(@config)
+    @tabList = new TabList(@config)
+    @tabConfiguracoes = new TabConfiguracoes(@config)
     @dados.get_data()
 
   getIS: =>  # retorna a string da instancia
@@ -57,12 +57,12 @@ class Searchlight
     $("##{@config.container_id}").html("<ul class='nav nav-tabs' role='tablist'>
     <li class='active'><a data-toggle='tab' href='##{@config.tab_id}'>Mapa</a></li>
     <li><a data-toggle='tab' href='#tab-#{@config.lista_id}'>Lista</a></li>
-    <li><a data-toggle='tab' href='#tab-#{@config.opcoes_id}'>Opções</a></li>
+    <li><a data-toggle='tab' href='#tab-#{@config.configuracoes_id}'>Configurações</a></li>
     </ul>
     <div class='tab-content'>
       <div class='tab-pane active' id='#{@config.tab_id}'><div id='#{@config.map_id}' > </div> </div>
-      <div class='tab-pane' id='tab-#{@config.lista_id}' ><div class='searchlight-tap' id='#{@config.lista_id}'> </div> </div>
-      <div class='tab-pane' id='tab-#{@config.opcoes_id}' ><div class='searchlight-tab' id='#{@config.opcoes_id}'≳ </div> </div>
+      <div class='tab-pane' id='tab-#{@config.lista_id}' ><div class='searchlight-tab' id='#{@config.lista_id}'> </div> </div>
+      <div class='tab-pane' id='tab-#{@config.configuracoes_id}' ><div class='searchlight-tab' id='#{@config.configuracoes_id}'> </div> </div>
     </div> ")
     @bsPopup = new Popup(@config)
 
@@ -80,44 +80,35 @@ class Searchlight
     @control = new  Controle(this)
    
     # amarrando eventos
-    $(@config.container_id).on 'dados:carregando', () => 
+    $("##{@config.container_id}").on 'dados:carregando', () => 
       @markers.fire("data:loading")
-     
+  
+    $("##{@config.container_id}").on 'dados:carregados', () => 
+      @markers.clearLayers()
+      @dados.addMarkersTo(@markers)
+      @control.addCatsToControl(@config.map_id)
+      @control.atualizarIconesMarcVisiveis()
+
+      # ajusta view aos zoom inicial dos marcadores
+      if @map.getBoundsZoom(@markers.getBounds()) == @map.getZoom()
+        @executandoZoomDeCarregamento = false
+      else
+        @map.fitBounds(@markers.getBounds())
+        @executandoZoomDeCarregamento = true
+
+      # para o loading
+      @markers.fire("data:loaded")
+
+      if @executandoZoomDeCarregamento == false
+        $("##{@config.container_id}").trigger('mapa:carregado')
+
+      # ao terminar de carregar faz zoom automatico sobre area dos dados. 
+      @autoZoom() #FIXME: nem sempre eh necessário, esta aqui apenas por causa de um bug em alguns mapas.
+  
+
   autoZoom: () =>
     @map.fitBounds(@markers.getBounds())
 
-  carregaDados: ( data)=>
-    try
-      for d, i in data
-        @addItem(d)
-    catch e
-      console.log(e)
-      @markers.fire("data:loaded")
-      alert("Não foi possivel carregar os dados do mapa. Verifique se a fonte de dados está formatada corretamente.")
-      return
-    console.log('dados carregados');
-    @markers.clearLayers()
-    @dados.addMarkersTo(@markers)
-    
-    if @map.getBoundsZoom(@markers.getBounds()) == @map.getZoom()
-      @carregando = false
-    else
-      @map.fitBounds(@markers.getBounds())
-      @carregando = true
-
-    @control.addCatsToControl(@config.map_id)
-    @tabList.load()
-    @tabOpcoes.load()
-    @markers.fire("data:loaded")
-    @control.atualizarIconesMarcVisiveis()
-
-    if @carregando == false and window['onSLcarregaDados'] != undefined
-      onSLcarregaDados(this)
-    # ao terminar de carregar faz zoom automatico sobre area dos dados.
-    @autoZoom() 
-      
-  addItem: (item) =>
-    @dados.addItem(item,@config.fontes.getFonte(0).func_code)
 
   mostrarCamadaMarkers: () =>
     @map.addLayer(@markers)

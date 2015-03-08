@@ -2,20 +2,27 @@
 #
 
 class TabList
-  constructor: (lista_id,sl)->
-    @sl = sl
-    @popup = @sl.bsPopup
-    @lista_id = lista_id
-    @dados = @sl.dados
+  @instances = {}
+  @getIS: (config)-> TabList.instances[config.container_id]
+  
+  constructor: (config)->
+    @config = config
+    TabList.instances[@config.container_id] = @
 
+    @popup = Popup.getIS(config)
+    @lista_id = @config.lista_id
+    @dados = Dados.getIS(config)
 
-  _instancia: ->  "#{@sl.getIS()}.tabList"
+    # sempre que carregar os dados tablist se carrega
+    $("##{@config.container_id}").on 'dados:carregados', () =>
+      @load()
+
 
   load: ()->
     html= '<table class="table">'
     for cat_name in @dados.getCategorias()
       for obj,i in @dados.getCatByName(cat_name)
-        html= "#{html}<tr><td><a href=\"javascript:void(0);\" onclick='javascript:#{@_instancia()}.open(#{i},\"#{cat_name}\");false;'> #{cat_name}</a></td><td>#{obj.texto}</td></tr>"
+        html= "#{html}<tr><td><a href=\"javascript:void(0);\" onclick='javascript:#{TabList.getIS(@config)}.open(#{i},\"#{cat_name}\");false;'> #{cat_name}</a></td><td>#{obj.texto}</td></tr>"
     html = "#{html}</table>" 
     $("##{@lista_id}").html(html)
     console.log 'TabList carregado'
