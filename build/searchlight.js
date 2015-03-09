@@ -25155,7 +25155,9 @@ L.MarkerClusterGroup.include({
     ClusterCtr.prototype.zoomGrupo = function() {
       this.closePopup();
       this.pilha_de_zoom.salva_zoom();
-      return this.cluster_clicado.layer.zoomToBounds();
+      if (this.cluster_clicado) {
+        return this.cluster_clicado.layer.zoomToBounds();
+      }
     };
 
     ClusterCtr.prototype.cancelPopup = function() {
@@ -25342,6 +25344,10 @@ L.MarkerClusterGroup.include({
       } else {
         return console.error("Error de configuração de fonte:", fonte);
       }
+    };
+
+    ConfigFontes.prototype.removeFonte = function(i) {
+      return this.fontes.splice(i);
     };
 
     ConfigFontes.prototype.getFontes = function() {
@@ -26357,6 +26363,15 @@ L.MarkerClusterGroup.include({
       }
       $("#" + this.idFontesDados).html(html);
       self = this;
+      $("#" + this.config.configuracoes_id + " a.link-remover").on('click', function(ev) {
+        var id_fonte;
+        id_fonte = $(this).data('fonte');
+        fonte = self.config.fontes.getFonte(id_fonte);
+        if (confirm("tem certeza que deseja remover esta fonte de dados:\n" + fonte.url)) {
+          self.config.fontes.removeFonte(id_fonte);
+          return self.renderFontes();
+        }
+      });
       return $("#" + this.config.configuracoes_id + " a.link-alterar").on('click', function(ev) {
         var id_fonte;
         id_fonte = $(this).data('fonte');

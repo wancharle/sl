@@ -21,6 +21,14 @@ class TabConfiguracoes
 
     # amarra eventos da lista
     self = @
+    $("##{@config.configuracoes_id} a.link-remover").on 'click', (ev) ->
+      id_fonte = $(this).data('fonte')
+      fonte = self.config.fontes.getFonte(id_fonte)
+      if confirm("tem certeza que deseja remover esta fonte de dados:\n#{fonte.url}")
+        self.config.fontes.removeFonte(id_fonte)
+        self.renderFontes()
+
+
     $("##{@config.configuracoes_id} a.link-alterar").on 'click', (ev) ->
       id_fonte = $(this).data('fonte')
       fonte = self.config.fontes.getFonte(id_fonte)

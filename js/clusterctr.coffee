@@ -59,7 +59,8 @@ class ClusterCtr
   zoomGrupo: ()=>
     @closePopup()
     @pilha_de_zoom.salva_zoom()
-    @cluster_clicado.layer.zoomToBounds()
+    if @cluster_clicado 
+      @cluster_clicado.layer.zoomToBounds()
  
   cancelPopup: () =>
     @clickOrdem = 2

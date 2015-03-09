@@ -16,12 +16,14 @@ class ConfigFontes
         @addFonte(fonte)
 
   addFonte: (fonte) ->
-
     if fonte.url and typeof fonte.func_code is 'function'
       @fontes.push(fonte)
     else
       console.error "Error de configuração de fonte:",fonte
 
+  removeFonte: (i) ->
+    @fontes.splice(i)
+    
   getFontes:() ->
     return @fontes
 
