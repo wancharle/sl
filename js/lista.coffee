@@ -22,9 +22,17 @@ class TabList
     html= '<table class="table">'
     for cat_name in @dados.getCategorias()
       for obj,i in @dados.getCatByName(cat_name)
-        html= "#{html}<tr><td><a href=\"javascript:void(0);\" onclick='javascript:#{TabList.getIS(@config)}.open(#{i},\"#{cat_name}\");false;'> #{cat_name}</a></td><td>#{obj.texto}</td></tr>"
+        html= "#{html}<tr><td><a href='javascript:void(0);' data-index='#{i}' data-cat='#{cat_name}' class='tablist-item'> #{cat_name}</a></td><td>#{obj.texto}</td></tr>"
     html = "#{html}</table>" 
     $("##{@lista_id}").html(html)
+
+    # amarando eventos
+    self = @
+    $("##{@lista_id} a.tablist-item").on 'click', (ev) ->
+      i = $(this).data('index')
+      cat_name = $(this).data('cat')
+      self.open(i,cat_name) 
+
     console.log 'TabList carregado'
 
   open: (i,cat_name) ->
