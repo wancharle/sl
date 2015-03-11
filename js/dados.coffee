@@ -88,7 +88,12 @@ class Dados
 
   addItem : (i,func_convert) =>
     geoItem = func_convert(i)
+          
     if geoItem
+      # se o objeto nao tiver id um hash_id eh gerado.
+      if not geoItem.id
+       geoItem.id = "#{parseFloat(geoItem.latitude).toFixed(7)}#{parseFloat(geoItem.longitude).toFixed(7)}#{md5(JSON.stringify(geoItem))}" 
+
       m =  new Marcador(geoItem,@config)
       cat = @_getCatOrCreate(m)
       cat.push(m)

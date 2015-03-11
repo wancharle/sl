@@ -62,6 +62,9 @@ class Popup
 
   showMarcador: ->
     m=Controle.getIS(@config).ultimo_marcador_clicado #TODO: colocar privado. criar metodo para retorna essa info
+    if Searchlight.debug
+      console.log(m.slinfo)
+
     if m.slinfo.title
       @setTitle(m.slinfo.title)
     else

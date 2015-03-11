@@ -2,6 +2,7 @@
 class Marcador
   constructor:(geoItem,config)->
     @m = null
+    @id = geoItem.id
     @config = config
     @instanceString = "SL(\"#{@config.map_id}\")"
     @latitude = parseFloat(geoItem.latitude.replace(',','.'))
