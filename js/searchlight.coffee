@@ -1,4 +1,4 @@
-# TODO:
+
 #import libs.spin
 #import libs.leaflet.spin
 
@@ -81,7 +81,8 @@ class Searchlight
    
     # amarrando eventos
     $("##{@config.container_id}").on 'dados:carregando', () => 
-      @markers.fire("data:loading")
+      @map.spin(true)
+
   
     $("##{@config.container_id}").on 'dados:carregados', () => 
       @markers.clearLayers()

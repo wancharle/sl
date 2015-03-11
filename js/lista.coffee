@@ -24,6 +24,7 @@ class TabList
       for obj,i in @dados.getCatByName(cat_name)
         html= "#{html}<tr><td><a href='javascript:void(0);' data-index='#{i}' data-cat='#{cat_name}' class='tablist-item'> #{cat_name}</a></td><td>#{obj.texto}</td></tr>"
     html = "#{html}</table>" 
+
     $("##{@lista_id}").html(html)
 
     # amarando eventos

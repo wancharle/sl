@@ -44,11 +44,14 @@ class Dados
   get_data: () =>
     obj = this
     @fontes_carregadas = []
-    $(@config.container_id).trigger("dados:carregando")
+    $("##{@config.container_id}").trigger("dados:carregando")
     for fonte, i in @config.fontes.getFontes()
       #fonte = @config.fontes.getFonte("0") # todo generalizar para mis de uma fonte.
-      @get_data_fonte(fonte)
-  
+      setTimeout(()=>
+        @get_data_fonte(fonte)
+      ,250)
+
+
   carregaDados: (data,fonte)->
     @fontes_carregadas.push(fonte)
     try

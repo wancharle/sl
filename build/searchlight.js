@@ -25001,7 +25001,9 @@ L.MarkerClusterGroup.include({
       config.popup_id = this.id;
       corpo = "<div id=\"" + this.id + "\" class=\"modal fade\" data-role='dialog'>";
       corpo += ' <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title"></h4> </div> <div class="modal-body"> </div> <div class="modal-footer"> <button type="button" class="btn btn-default cancelar" data-dismiss="modal">Cancelar</button> <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button> </div> </div><!-- /.modal-content --> </div><!-- /.modal-dialog --> </div>';
-      $("body").prepend(corpo);
+      if (!$("#" + this.id).length) {
+        $("body").prepend(corpo);
+      }
     }
 
     Popup.prototype.show = function() {
@@ -25347,7 +25349,7 @@ L.MarkerClusterGroup.include({
     };
 
     ConfigFontes.prototype.removeFonte = function(i) {
-      return this.fontes.splice(i);
+      return this.fontes.splice(i, 1);
     };
 
     ConfigFontes.prototype.getFontes = function() {
@@ -25767,12 +25769,16 @@ L.MarkerClusterGroup.include({
       var fonte, i, obj, _i, _len, _ref, _results;
       obj = this;
       this.fontes_carregadas = [];
-      $(this.config.container_id).trigger("dados:carregando");
+      $("#" + this.config.container_id).trigger("dados:carregando");
       _ref = this.config.fontes.getFontes();
       _results = [];
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         fonte = _ref[i];
-        _results.push(this.get_data_fonte(fonte));
+        _results.push(setTimeout((function(_this) {
+          return function() {
+            return _this.get_data_fonte(fonte);
+          };
+        })(this), 250));
       }
       return _results;
     };
@@ -25918,6 +25924,7 @@ L.MarkerClusterGroup.include({
         }
       }
       html = "" + html + "</table>";
+      $("#" + this.lista_id).empty();
       $("#" + this.lista_id).html(html);
       self = this;
       $("#" + this.lista_id + " a.tablist-item").on('click', function(ev) {
@@ -26302,7 +26309,7 @@ L.MarkerClusterGroup.include({
       this.control = new Controle(this);
       $("#" + this.config.container_id).on('dados:carregando', (function(_this) {
         return function() {
-          return _this.markers.fire("data:loading");
+          return _this.map.spin(true);
         };
       })(this));
       return $("#" + this.config.container_id).on('dados:carregados', (function(_this) {
@@ -26365,8 +26372,9 @@ L.MarkerClusterGroup.include({
       _ref = this.config.fontes.getFontes();
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         fonte = _ref[i];
-        html += "<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='" + i + "' href='#'>Alterar</a> | <a class='link-remover'data-fonte='" + i + "' href='#'>Remover</a></span> <a href='" + fonte.url + "' target='_blank'>" + fonte.url + "</a></span></li>";
+        html += "<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='" + i + "' href='#'>Alterar</a> | <a class='link-remover' data-fonte='" + i + "' href='#'>Remover</a></span> <a href='" + fonte.url + "' target='_blank'>" + fonte.url + "</a></span></li>";
       }
+      $("#" + this.idFontesDados).empty();
       $("#" + this.idFontesDados).html(html);
       self = this;
       $("#" + this.config.configuracoes_id + " a.link-remover").on('click', function(ev) {
@@ -26409,7 +26417,14 @@ L.MarkerClusterGroup.include({
       });
       $("#" + this.config.configuracoes_id + " button.searchlight-btn-salvar").on('click', (function(_this) {
         return function(ev) {
-          var searchlight;
+          var searchlight, sl;
+          sl = SL("map-" + _this.config.container_id);
+          $("#" + _this.config.container_id).off();
+          $("#" + _this.config.container_id + " * ").off();
+          sl.markers.off();
+          sl.map.off();
+          sl.markers.clearLayers();
+          sl.map.remove();
           return searchlight = new Searchlight(_this.config.toJSON());
         };
       })(this));

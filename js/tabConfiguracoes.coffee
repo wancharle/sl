@@ -16,11 +16,13 @@ class TabConfiguracoes
   renderFontes: ()->
     html = ""
     for fonte,i in @config.fontes.getFontes()
-      html+="<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='#{i}' href='#'>Alterar</a> | <a class='link-remover'data-fonte='#{i}' href='#'>Remover</a></span> <a href='#{fonte.url}' target='_blank'>#{fonte.url}</a></span></li>"
+      html+="<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='#{i}' href='#'>Alterar</a> | <a class='link-remover' data-fonte='#{i}' href='#'>Remover</a></span> <a href='#{fonte.url}' target='_blank'>#{fonte.url}</a></span></li>"
+
     $("##{@idFontesDados}").html(html)
 
     # amarra eventos da lista
     self = @
+
     $("##{@config.configuracoes_id} a.link-remover").on 'click', (ev) ->
       id_fonte = $(this).data('fonte')
       fonte = self.config.fontes.getFonte(id_fonte)
@@ -84,6 +86,16 @@ class TabConfiguracoes
 
 
     $("##{@config.configuracoes_id} button.searchlight-btn-salvar").on 'click', (ev) =>
+      sl = SL("map-"+@config.container_id)
+ 
+      $("##{@config.container_id}").off()
+      $("##{@config.container_id} * ").off()
+      sl.markers.off()
+      sl.map.off()
+
+      sl.markers.clearLayers()
+      sl.map.remove()
+
       searchlight = new Searchlight(@config.toJSON())
 
     $("##{@config.configuracoes_id} button.searchlight-btn-add-fonte").on 'click', (ev) =>

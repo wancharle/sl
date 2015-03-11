@@ -29,8 +29,8 @@ class Popup
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div>'
-
-    $("body").prepend(corpo)
+    if not $("##{@id}").length
+      $("body").prepend(corpo)
 
    
   show: ->

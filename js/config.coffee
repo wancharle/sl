@@ -22,7 +22,7 @@ class ConfigFontes
       console.error "Error de configuração de fonte:",fonte
 
   removeFonte: (i) ->
-    @fontes.splice(i)
+    @fontes.splice(i,1)
     
   getFontes:() ->
     return @fontes
