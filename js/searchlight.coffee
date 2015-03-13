@@ -43,7 +43,8 @@ class Searchlight
     sl_referencias[@config.map_id]  = this 
 
     @create()
-    
+    $('.collapse').collapse()
+
     @dados = new Dados(this)
     @tabList = new TabList(@config)
     @tabConfiguracoes = new TabConfiguracoes(@config)
@@ -120,6 +121,7 @@ class Searchlight
     @map_ultimo_zoom =  @map.getZoom()
     @map_ultimo_center = @map.getCenter()
 Searchlight.Popup = Popup
+Searchlight.Marcador = Marcador
 window.Searchlight = Searchlight
 
 # vim: set ts=2 sw=2 sts=2 expandtab:

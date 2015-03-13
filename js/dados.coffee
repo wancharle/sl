@@ -11,7 +11,8 @@ class Dados
     @clear()
 
   clear: =>
-    @marcadores = []
+    @marcadores = {}
+    @marcadores_filhos = {}
     @categorias = {}
     @categorias_id = {}
 
@@ -47,9 +48,7 @@ class Dados
     $("##{@config.container_id}").trigger("dados:carregando")
     for fonte, i in @config.fontes.getFontes()
       #fonte = @config.fontes.getFonte("0") # todo generalizar para mis de uma fonte.
-      setTimeout(()=>
-        @get_data_fonte(fonte)
-      ,250)
+      @get_data_fonte(fonte)
 
 
   carregaDados: (data,fonte)->
@@ -86,6 +85,18 @@ class Dados
       @categorias_id[m.cat] = m.cat_id
       return @categorias[m.cat]
 
+  getFilhos: (pai_id)->
+    m = @marcadores_filhos[pai_id] 
+    if m 
+      return m
+    else
+      return [] 
+
+  adicioneFilho: (pai_id,filho) ->
+    if not @marcadores_filhos[pai_id]
+      @marcadores_filhos[pai_id] = [ ]
+    @marcadores_filhos[pai_id].push(filho)
+
   addItem : (i,func_convert) =>
     geoItem = func_convert(i)
           
@@ -95,6 +106,11 @@ class Dados
        geoItem.id = "#{parseFloat(geoItem.latitude).toFixed(7)}#{parseFloat(geoItem.longitude).toFixed(7)}#{md5(JSON.stringify(geoItem))}" 
 
       m =  new Marcador(geoItem,@config)
+      @marcadores[m.id]  = m
+      if geoItem.id_parent
+        @adicioneFilho(geoItem.id_parent,m)
+
+
       cat = @_getCatOrCreate(m)
       cat.push(m)
 

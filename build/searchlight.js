@@ -25256,7 +25256,7 @@ L.MarkerClusterGroup.include({
 
 }(window, document));
 (function() {
-  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, ConfigFontes, Controle, Dados, Dicionario, Marcador, PilhaDeZoom, Popup, PopupFontes, SENADO_FEDERAL, Searchlight, TabConfiguracoes, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
+  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, ConfigFontes, Controle, Dados, Dicionario, ListaFilhos, Marcador, PilhaDeZoom, Popup, PopupFontes, SENADO_FEDERAL, Searchlight, TabConfiguracoes, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -25319,21 +25319,6 @@ L.MarkerClusterGroup.include({
       }
       $("#" + this.id).off('hide.bs.modal');
       return $("#" + this.id).on('hide.bs.modal', callback);
-    };
-
-    Popup.prototype.showMarcador = function() {
-      var m;
-      m = Controle.getIS(this.config).ultimo_marcador_clicado;
-      if (Searchlight.debug) {
-        console.log(m.slinfo);
-      }
-      if (m.slinfo.title) {
-        this.setTitle(m.slinfo.title);
-      } else {
-        this.setTitle("");
-      }
-      this.setBody(m.slinfo.texto);
-      return this.show();
     };
 
     return Popup;
@@ -25995,7 +25980,8 @@ L.MarkerClusterGroup.include({
     }
 
     Dados.prototype.clear = function() {
-      this.marcadores = [];
+      this.marcadores = {};
+      this.marcadores_filhos = {};
       this.categorias = {};
       return this.categorias_id = {};
     };
@@ -26052,11 +26038,7 @@ L.MarkerClusterGroup.include({
       _results = [];
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         fonte = _ref[i];
-        _results.push(setTimeout((function(_this) {
-          return function() {
-            return _this.get_data_fonte(fonte);
-          };
-        })(this), 250));
+        _results.push(this.get_data_fonte(fonte));
       }
       return _results;
     };
@@ -26108,6 +26090,23 @@ L.MarkerClusterGroup.include({
       }
     };
 
+    Dados.prototype.getFilhos = function(pai_id) {
+      var m;
+      m = this.marcadores_filhos[pai_id];
+      if (m) {
+        return m;
+      } else {
+        return [];
+      }
+    };
+
+    Dados.prototype.adicioneFilho = function(pai_id, filho) {
+      if (!this.marcadores_filhos[pai_id]) {
+        this.marcadores_filhos[pai_id] = [];
+      }
+      return this.marcadores_filhos[pai_id].push(filho);
+    };
+
     Dados.prototype.addItem = function(i, func_convert) {
       var cat, geoItem, m;
       geoItem = func_convert(i);
@@ -26116,6 +26115,10 @@ L.MarkerClusterGroup.include({
           geoItem.id = "" + (parseFloat(geoItem.latitude).toFixed(7)) + (parseFloat(geoItem.longitude).toFixed(7)) + (md5(JSON.stringify(geoItem)));
         }
         m = new Marcador(geoItem, this.config);
+        this.marcadores[m.id] = m;
+        if (geoItem.id_parent) {
+          this.adicioneFilho(geoItem.id_parent, m);
+        }
         cat = this._getCatOrCreate(m);
         return cat.push(m);
       }
@@ -26228,13 +26231,36 @@ L.MarkerClusterGroup.include({
 
   })();
 
+  ListaFilhos = (function() {
+    function ListaFilhos(marcador_pai) {
+      this.dados = Dados.getIS(marcador_pai.config);
+      this.filhos = this.dados.getFilhos(marcador_pai.id);
+    }
+
+    ListaFilhos.prototype.getHTML = function() {
+      var f, html, i, _i, _len, _ref;
+      html = '<hr/><h4>Anotações relacionadas</h4><div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">';
+      _ref = this.filhos;
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        f = _ref[i];
+        html += '<div class="panel panel-default"> <div class="panel-heading" role="tab" id="heading' + i + '"> <h4 class="panel-title"><a data-toggle="collapse" data-parent="#accordion" href="#collapse' + i + '" aria-expanded="true" aria-controls="collapse' + i + '">';
+        html += f.title + '</a></h4></div>';
+        html += ' <div id="collapse' + i + '" class="panel-collapse collapse ' + (i < 1 ? 'in' : void 0) + '" role="tabpanel" aria-labelledby="heading' + i + '"> <div class="panel-body">' + f.texto + '</div> </div> </div>';
+      }
+      html += '</div>';
+      return html;
+    };
+
+    return ListaFilhos;
+
+  })();
+
   Marcador = (function() {
     function Marcador(geoItem, config) {
-      this.getMark = __bind(this.getMark, this);
       this.m = null;
       this.id = geoItem.id;
+      this.id_parent = geoItem.id_parent;
       this.config = config;
-      this.instanceString = "SL(\"" + this.config.map_id + "\")";
       this.latitude = parseFloat(geoItem.latitude.replace(',', '.'));
       this.longitude = parseFloat(geoItem.longitude.replace(',', '.'));
       this.texto = geoItem.texto;
@@ -26250,6 +26276,7 @@ L.MarkerClusterGroup.include({
         this.cat = "descategorizado";
         this.cat_id = 1;
       }
+      this.title = geoItem.title;
     }
 
     Marcador.prototype.getMark = function() {
@@ -26260,12 +26287,33 @@ L.MarkerClusterGroup.include({
         m.setIcon(this.icon);
         this.m = m;
         this.m.slinfo = this;
-        html = "" + m.slinfo.texto + "<p><a href='javascript:void(0);' onclick='" + this.instanceString + ".bsPopup.showMarcador()'>ver mais</a></p>";
+        html = "" + m.slinfo.texto + "<p><a href='javascript:void(0);' onclick='Searchlight.Marcador.show(\"" + this.config.map_id + "\")'>ver mais</a></p>";
         this.m.bindPopup(html, {
           'maxWidth': 640
         });
       }
       return this.m;
+    };
+
+    Marcador.show = function(map_id) {
+      var config, m, popup, sl;
+      sl = SL(map_id);
+      config = sl.config;
+      popup = Popup.getIS(config);
+      m = Controle.getIS(config).ultimo_marcador_clicado.slinfo;
+      if (Searchlight.debug) {
+        console.log(m);
+      }
+      if (m.title) {
+        popup.setTitle(m.title);
+      } else {
+        popup.setTitle("");
+      }
+      if (!m.listaFilhos) {
+        m.listaFilhos = new ListaFilhos(m);
+      }
+      popup.setBody(m.texto + m.listaFilhos.getHTML());
+      return popup.show();
     };
 
     return Marcador;
@@ -26557,6 +26605,7 @@ L.MarkerClusterGroup.include({
       this.config = new Config(opcoes);
       sl_referencias[this.config.map_id] = this;
       this.create();
+      $('.collapse').collapse();
       this.dados = new Dados(this);
       this.tabList = new TabList(this.config);
       this.tabConfiguracoes = new TabConfiguracoes(this.config);
@@ -26634,6 +26683,8 @@ L.MarkerClusterGroup.include({
   })();
 
   Searchlight.Popup = Popup;
+
+  Searchlight.Marcador = Marcador;
 
   window.Searchlight = Searchlight;
 

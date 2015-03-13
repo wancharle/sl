@@ -59,17 +59,4 @@ class Popup
     $("##{@id}").off('hide.bs.modal')
     $("##{@id}").on('hide.bs.modal',callback)
 
-
-  showMarcador: ->
-    m=Controle.getIS(@config).ultimo_marcador_clicado #TODO: colocar privado. criar metodo para retorna essa info
-    if Searchlight.debug
-      console.log(m.slinfo)
-
-    if m.slinfo.title
-      @setTitle(m.slinfo.title)
-    else
-      @setTitle("")
-    @setBody(m.slinfo.texto)
-    @show()
-
 # vim: set ts=2 sw=2 sts=2 expandtab:
