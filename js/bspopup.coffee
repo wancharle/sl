@@ -33,7 +33,11 @@ class Popup
       $("body").prepend(corpo)
 
    
-  show: ->
+  show: (classe) ->
+
+    $("##{@id}").removeClass('modal-sm modal-lg')
+    $("##{@id}").addClass(classe)
+    
     $("##{@id}").modal('show')
 
   close: ->

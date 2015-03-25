@@ -27,6 +27,13 @@ class ConfigFontes
   getFontes:() ->
     return @fontes
 
+  toJSON:() ->
+    array = []
+    for f,i in @fontes
+      f.func_text = f.func_code.toString()
+      array.push(f)
+    return array
+
   updateFonte: (url,func_code, id) ->
     fonte = {url:url,func_code:func_code}
     @fontes[id]=fonte
@@ -65,7 +72,7 @@ class Config
       'clusterizar':  @clusterizar
       'useBsPopup': @useBsPopup
       'url_osm': @urlosm
-      'fontes': @fontes.getFontes()
+      'fontes': @fontes.toJSON()
     }
 
       

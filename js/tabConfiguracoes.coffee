@@ -11,6 +11,8 @@ class TabConfiguracoes
     @idFontesDados = @config.container_id + '-ulFontesDados'
     @popupFontes = new PopupFontes(config)
 
+    @containerQR = @config.container_id + '-qrcode'
+
     @render()
 
   renderFontes: ()->
@@ -65,6 +67,8 @@ class TabConfiguracoes
 
 <fieldset>
 <button type='button' class='btn btn-default searchlight-btn-salvar'>Salvar</button>
+<button type='button' class='btn btn-default searchlight-btn-qrcodigo'>Gerar código para o Searchlight Mobile</button>
+
 </fieldset>
 </form>"
 
@@ -84,6 +88,14 @@ class TabConfiguracoes
       self.config.url = $(@).val()
 
 
+
+    $("##{@config.configuracoes_id} button.searchlight-btn-qrcodigo").on 'click', (ev) =>
+      popup = Popup.getIS(@config)
+      popup.setTitle("<p  style='padding:0px;margin:0px;text-align:center'>QR code para o aplicativo Searchlight Mobile</p>")
+      popup.setBody("<div style='width:300px;margin:0px auto;' id='#{@containerQR}' > </div><br/><p style='text-align:center'> Abra o aplicativo Searchlight Mobile e escolha a opção 'Vincular Visualização'. Posicione o smartphone adequadamente para ler o código QR abaixo:</p>")
+      popup.show()
+      url = "http://sl.wancharle.com/note/id=#{md5(JSON.stringify(@config.toJSON()))}"
+      $("##{@containerQR}").empty().qrcode({ width:300,height:300,mode:0,'text': url})
 
     $("##{@config.configuracoes_id} button.searchlight-btn-salvar").on 'click', (ev) =>
       sl = SL("map-"+@config.container_id)

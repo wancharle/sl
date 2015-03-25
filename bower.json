@@ -20,6 +20,7 @@
     "dms2dec-PTBR.js": "git@github.com:wancharle/dms2dec.js.git#~1.0.2",
     "papaparse.js": "~3.1.2",
     "bootstrap": "~3.2.0",
-    "blueimp-md5": "~1.1.0"
+    "blueimp-md5": "~1.1.0",
+    "jquery-qrcode": "*"
   }
 }

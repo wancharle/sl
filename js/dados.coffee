@@ -98,7 +98,12 @@ class Dados
     @marcadores_filhos[pai_id].push(filho)
 
   addItem : (i,func_convert) =>
-    geoItem = func_convert(i)
+    try
+      geoItem = func_convert(i)
+    catch e 
+      if Searchlight.debug
+        console.error("Erro em Dados::addItem: #{e.message}",i)
+      geoItem = null
           
     if geoItem
       # se o objeto nao tiver id um hash_id eh gerado.
