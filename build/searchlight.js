@@ -22234,6 +22234,370 @@ L.Map.include({
 	}
 })(this);
 
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var Config, utils;
+
+utils = require('./utils.coffee');
+
+Config = (function() {
+  function Config(opcoes) {
+    this.id = md5(JSON.stringify(opcoes));
+    this.opcoes = new utils.Dicionario(opcoes);
+    this.serverURL = this.opcoes.get('serverURL', 'http://sl.wancharle.com.br');
+    this.createURL = this.opcoes.get('createURL', this.serverURL + "/note/create/");
+    this.loginURL = this.opcoes.get('loginURL', this.serverURL + "/user/login/");
+    this.logoutURL = this.opcoes.get('logoutURL', this.serverURL + "/user/logout/");
+    this.notesURL = this.opcoes.get('notesURL', this.serverURL + "/note/");
+    this.notebookURL = this.opcoes.get('notebookURL', this.serverURL + "/notebook/");
+  }
+
+  return Config;
+
+})();
+
+module.exports = {
+  'Config': Config
+};
+
+
+
+},{"./utils.coffee":6}],2:[function(require,module,exports){
+var Notebook;
+
+Notebook = (function() {
+  Notebook.instances = {};
+
+  Notebook.getInstance = function(config) {
+    return this.instances[config.id];
+  };
+
+  function Notebook(config) {
+    Notebook.instances[config.id] = this;
+    this.config = config;
+  }
+
+  Notebook.prototype.getByName = function(notebookName, callback, callbackFail) {
+    var url;
+    if (callbackFail == null) {
+      callbackFail = null;
+    }
+    url = this.config.notebookURL + "?name=" + notebookName;
+    return $.get(url, function(data) {
+      console.log('ola');
+      return callback(data);
+    });
+  };
+
+  Notebook.prototype.getById = function(notebookId, callback, callbackFail) {
+    var url;
+    if (callbackFail == null) {
+      callbackFail = null;
+    }
+    url = this.config.notebookURL + "?id=" + notebookId;
+    return $.get(url, callback, callbackFail);
+  };
+
+  return Notebook;
+
+})();
+
+module.exports = {
+  'Notebook': Notebook
+};
+
+
+
+},{}],3:[function(require,module,exports){
+var Note, Notes;
+
+Note = (function() {
+  function Note(dados, notebook) {
+    this.categoria = dados.categoria;
+    this.comentarios = dados.comentarios;
+    this.fotoURI = dados.fotoURI;
+    this.lat = dados.lat ? dados.lat : '40.0';
+    this.lng = dados.lng ? dados.lng : '-20.0';
+    this.accuracy = dados.accuracy;
+    this.user = dados.user_id;
+    this.data_hora = dados.data_hora;
+  }
+
+  return Note;
+
+})();
+
+Notes = (function() {
+  Notes.instances = {};
+
+  Notes.getInstance = function(config) {
+    return this.instances[config.id];
+  };
+
+  function Notes(config) {
+    Notes.instances[config.id] = this;
+    this.config = config;
+  }
+
+  Notes.prototype.getByUser = function(user_id, callback, callback_fail) {
+    var xhr;
+    xhr = $.get(this.config.notesURL + "?user=" + user_id);
+    xhr.done(function(data) {
+      return callback(data);
+    });
+    return xhr.fail(function() {
+      return callback_fail();
+    });
+  };
+
+  Notes.prototype.getByQuery = function(query, callback, callback_fail) {
+    var xhr;
+    xhr = $.get(this.config.notesURL + "?" + query);
+    xhr.done(function(data) {
+      return callback(data);
+    });
+    return xhr.fail(function() {
+      return callback_fail();
+    });
+  };
+
+  Notes.prototype.update = function(note_id, queryparams, callback, callback_fail) {
+    var xhr;
+    xhr = $.post(this.config.notesURL + "update/" + note_id + "/", queryparams);
+    xhr.done(function(data) {
+      return callback(data);
+    });
+    return xhr.fail(function() {
+      return callback_fail();
+    });
+  };
+
+  Notes.prototype["delete"] = function(note_id, callback) {
+    return $.ajax({
+      url: "" + this.config.notesURL + note_id,
+      type: "DELETE",
+      crossDomain: true,
+      success: function(data) {
+        return callback(data);
+      }
+    });
+  };
+
+  Notes.prototype.enviar = function(note, notebookId, callback_ok, callback_fail) {
+    var ft, options, params;
+    if (callback_ok == null) {
+      callback_ok = (function() {});
+    }
+    if (callback_fail == null) {
+      callback_fail = (function() {});
+    }
+    if (!notebookId) {
+      console.error('NotebookId não foi informado!');
+      return;
+    }
+    params = note;
+    params.notebook = notebookId;
+    $(document).trigger('slsapi.note:uploadStart');
+    if (note.fotoURI) {
+      options = new FileUploadOptions();
+      options.params = params;
+      options.fileKey = "foto";
+      options.fileName = note.fotoURI.substr(note.fotoURI.lastIndexOf('/') + 1);
+      options.mimeType = "image/jpeg";
+      options.params.fotoURL = true;
+      ft = new FileTransfer();
+      return ft.upload(note.fotoURI, encodeURI(this.config.createURL), (function(_this) {
+        return function(r) {
+          $(document).trigger('slsapi.note:uploadFinish');
+          return callback_ok(r);
+        };
+      })(this), (function(_this) {
+        return function(error) {
+          $(document).trigger('slsapi.note:uploadFail');
+          return callback_fail(error);
+        };
+      })(this), options);
+    } else {
+      return $.post(this.config.createURL, params, function(json) {
+        $(document).trigger('slsapi.note:uploadFinish');
+        return callback_ok(json);
+      }, 'json').fail(function(error) {
+        $(document).trigger('slsapi.note:uploadFail');
+        return callback_fail(error);
+      });
+    }
+  };
+
+  return Notes;
+
+})();
+
+module.exports = {
+  'Notes': Notes,
+  'Note': Note
+};
+
+
+
+},{}],4:[function(require,module,exports){
+var Config, Notebook, Notes, SLSAPI, User;
+
+Notes = require('./notes.coffee').Notes;
+
+Notebook = require('./notebook.coffee').Notebook;
+
+User = require('./user.coffee').User;
+
+Config = require('./config.coffee').Config;
+
+SLSAPI = (function() {
+  function SLSAPI(opts) {
+    $.ajaxSetup({
+      crossDomain: true,
+      xhrFields: {
+        withCredentials: true
+      }
+    });
+    this.config = new Config(opts);
+    this.user = new User(this.config);
+    this.notes = new Notes(this.config);
+    this.notebook = new Notebook(this.config);
+  }
+
+  return SLSAPI;
+
+})();
+
+SLSAPI.Notes = Notes;
+
+if (typeof window !== "undefined") {
+  window.SLSAPI = SLSAPI;
+}
+
+
+
+},{"./config.coffee":1,"./notebook.coffee":2,"./notes.coffee":3,"./user.coffee":5}],5:[function(require,module,exports){
+var User,
+  bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+User = (function() {
+  User.instances = {};
+
+  User.getInstance = function(config) {
+    return this.instances[config.id];
+  };
+
+  function User(config1) {
+    this.config = config1;
+    this.login = bind(this.login, this);
+    User.instances[this.config.id] = this;
+    this.storage = window.localStorage;
+    this.usuario = this.getUsuario();
+  }
+
+  User.prototype.isLogged = function() {
+    var tempo_logado, usuario;
+    usuario = this.getUsuario();
+    if (usuario) {
+      console.log(usuario);
+      tempo_logado = ((new Date()).getTime() - this.logginTime) / 1000;
+      if (tempo_logado > 24 * 3600) {
+        return false;
+      }
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  User.prototype.getUsuario = function() {
+    this.usuario = this.storage.getItem('Usuario');
+    this.user_id = this.storage.getItem('user_id');
+    this.logginTime = this.storage.getItem('logginTime');
+    return this.usuario;
+  };
+
+  User.prototype.setUsuario = function(usuario, json) {
+    this.user_id = json.id;
+    this.usuario = usuario;
+    this.storage.setItem('Usuario', this.usuario);
+    this.storage.setItem('user_id', this.user_id);
+    return this.storage.setItem('logginTime', (new Date()).getTime());
+  };
+
+  User.prototype.logout = function(callback) {
+    this.storage.removeItem('Usuario');
+    this.usuario = null;
+    this.user_id = null;
+    return $.get(this.config.logoutURL, callback);
+  };
+
+  User.prototype.login = function(u, p) {
+    var url;
+    if (u && p) {
+      url = this.config.loginURL;
+      $(document).trigger('slsapi.user:loginStart');
+      $.post(url, {
+        username: u,
+        password: p
+      }, (function(_this) {
+        return function(json) {
+          if (json.error) {
+            alert(json.error);
+          } else {
+            _this.setUsuario(u, json);
+            $(document).trigger('slsapi.user:loginSuccess');
+          }
+          return $(document).trigger('slsapi.user:loginFinish');
+        };
+      })(this), "json").fail(function() {
+        return $(document).trigger('slsapi.user:loginFail');
+      });
+    }
+    return false;
+  };
+
+  return User;
+
+})();
+
+module.exports = {
+  'User': User
+};
+
+
+
+},{}],6:[function(require,module,exports){
+var Dicionario,
+  bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+Dicionario = (function() {
+  function Dicionario(js_hash) {
+    this.get = bind(this.get, this);
+    this.keys = Object.keys(js_hash);
+    this.data = js_hash;
+  }
+
+  Dicionario.prototype.get = function(key, value) {
+    if (indexOf.call(this.keys, key) >= 0) {
+      return this.data[key];
+    } else {
+      return value;
+    }
+  };
+
+  return Dicionario;
+
+})();
+
+module.exports = {
+  Dicionario: Dicionario
+};
+
+
+
+},{}]},{},[4]);
+
 (function(global) {
   "use strict";
 
@@ -25635,10 +25999,21 @@ L.MarkerClusterGroup.include({
     }
 
     ConfigFontes.prototype.addFonte = function(fonte) {
+      var e;
       if (fonte.url && typeof fonte.func_code === 'function') {
         return this.fontes.push(fonte);
       } else {
-        return console.error("Error de configuração de fonte:", fonte);
+        if (typeof fonte.func_code === 'string') {
+          try {
+            fonte.func_code = string2function(fonte.func_code);
+          } catch (_error) {
+            e = _error;
+            console.error(e, 'Error ao tentar criar funcao de conversao apartir de texto');
+          }
+          return this.fontes.push(fonte);
+        } else {
+          return console.error("Error de configuração de fonte:", fonte);
+        }
       }
     };
 
@@ -25656,7 +26031,7 @@ L.MarkerClusterGroup.include({
       _ref = this.fontes;
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         f = _ref[i];
-        f.func_text = f.func_code.toString();
+        f.func_code = f.func_code.toString();
         array.push(f);
       }
       return array;
@@ -25694,6 +26069,10 @@ L.MarkerClusterGroup.include({
       this.clusterizar = d.get('clusterizar', true);
       this.useBsPopup = d.get('useBsPopup', true);
       this.urlosm = d.get('url_osm', "http://{s}.tile.osm.org/{z}/{x}/{y}.png");
+      this.slsUser = d.get('sls_user', '');
+      this.slsPassword = '';
+      this.urlsls = d.get('url_sls', "http://sl.wancharle.com.br");
+      this.viewerTitle = d.get('viewerTitle', '');
       this.fontes = new ConfigFontes(d);
     }
 
@@ -25705,6 +26084,9 @@ L.MarkerClusterGroup.include({
         'clusterizar': this.clusterizar,
         'useBsPopup': this.useBsPopup,
         'url_osm': this.urlosm,
+        'url_sls': this.urlsls,
+        'sls_user': this.slsUser,
+        'viewerTitle': this.viewerTitle,
         'fontes': this.fontes.toJSON()
       };
     };
@@ -26741,14 +27123,159 @@ L.MarkerClusterGroup.include({
 
   TabConfiguracoes = (function() {
     function TabConfiguracoes(config) {
-      this.idUrlOSM = config.container_id + '-urlosm';
       this.config = config;
-      this.idClusterizar = this.config.container_id + '-clusterizar';
       this.idFontesDados = this.config.container_id + '-ulFontesDados';
       this.popupFontes = new PopupFontes(config);
+      this.idUrlOSM = config.container_id + '-urlosm';
+      this.idClusterizar = this.config.container_id + '-clusterizar';
+      this.idUrlSLS = config.container_id + '-urlsls';
+      this.idUsuario = config.container_id + '-usuario';
+      this.idPassword = config.container_id + '-password';
       this.containerQR = this.config.container_id + '-qrcode';
+      this.idViewerTitle = this.config.container_id + '-title';
+      this.slsapi = new SLSAPI({
+        serverURL: this.config.urlsls
+      });
+      this.slsapi.notebook.getByName('mapas', (function(_this) {
+        return function(data) {
+          return _this.notebookConfigs = data[0].id;
+        };
+      })(this));
       this.render();
+      this.onLoginLogout();
     }
+
+    TabConfiguracoes.prototype.onLoginLogout = function() {
+      if (this.slsapi.user.isLogged()) {
+        $("#" + this.config.container_id + " .form-login").show();
+        $("#" + this.config.container_id + " .form-logout").hide();
+        return $("#" + this.config.container_id + " .form-login .user").html(this.slsapi.user.getUsuario());
+      } else {
+        $("#" + this.config.container_id + " .form-logout").show();
+        return $("#" + this.config.container_id + " .form-login").hide();
+      }
+    };
+
+    TabConfiguracoes.prototype.onQRCodeClick = function() {
+      var hashid, self;
+      self = this;
+      if (this.slsapi.user.isLogged()) {
+        if (!this.config.viewerTitle) {
+          return alert('Informe um titulo para sua visualização');
+        } else {
+          hashid = md5(JSON.stringify(this.config.viewerTitle));
+          return this.slsapi.notes.getByQuery("user=" + self.slsapi.user.user_id + "&hid=" + hashid, function(data) {
+            var note;
+            if (data.length > 0) {
+              note = data[0];
+              return self.slsapi.notes.update(note.id, {
+                config: self.config.toJSON()
+              }, function() {
+                return self.showQRcode(hashid);
+              }, function() {
+                return alert('Não foi possivel se conectar com Searchlight Storage');
+              });
+            } else {
+              note = {};
+              console.log('entrei');
+              note.config = self.config.toJSON();
+              console.log('passei');
+              note.longitude = 0.0;
+              note.latitude = 0.0;
+              note.hid = hashid;
+              note.user = self.slsapi.user.user_id;
+              return self.slsapi.notes.enviar(note, self.notebookConfigs, function() {
+                return self.showQRcode(hashid);
+              }, function(error) {
+                console.log(arguments);
+                return alert('Não foi possivel conectar com SearchLight Storage');
+              });
+            }
+          }, function() {
+            return alert('Não foi possivel se conectar com Searchlight Storage');
+          });
+        }
+      } else {
+        return alert('Voce precisa estar conectado ao Searchlight Storage');
+      }
+    };
+
+    TabConfiguracoes.prototype.showQRcode = function(hashid) {
+      var popup, url;
+      popup = Popup.getIS(this.config);
+      popup.setTitle("<p  style='padding:0px;margin:0px;text-align:center'>QR code para o aplicativo Searchlight Mobile</p>");
+      popup.setBody("<br><div style='width:300px;margin:0px auto;' id='" + this.containerQR + "' > </div><br><p style='text-align:center'> Abra o aplicativo Searchlight Mobile e escolha a opção 'Vincular Visualização'. Clique em 'gerar código' para gerar um código de vinculação. Posicione o smartphone adequadamente para ler o código QR acima.</p>");
+      popup.show();
+      url = "http://sl.wancharle.com/note/?hid=" + hashid;
+      return $("#" + this.containerQR).empty().qrcode({
+        width: 300,
+        height: 300,
+        mode: 0,
+        'text': url
+      });
+    };
+
+    TabConfiguracoes.prototype.onSalvar = function() {
+      var searchlight, sl;
+      sl = SL("map-" + this.config.container_id);
+      $("#" + this.config.container_id).off();
+      $("#" + this.config.container_id + " * ").off();
+      sl.markers.off();
+      sl.map.off();
+      sl.markers.clearLayers();
+      sl.map.remove();
+      return searchlight = new Searchlight(this.config.toJSON());
+    };
+
+    TabConfiguracoes.prototype.bind = function() {
+      var self;
+      self = this;
+      $("#" + this.idClusterizar).on('change', function(ev) {
+        return self.config.clusterizar = this.checked;
+      });
+      $("#" + this.idUrlOSM).on('change', function(ev) {
+        return self.config.urlosm = $(this).val();
+      });
+      $("#" + this.idUrl).on('change', function(ev) {
+        return self.config.url = $(this).val();
+      });
+      $("#" + this.idUrlSLS).on('change', function(ev) {
+        return self.config.urlsls = $(this).val();
+      });
+      $("#" + this.idUsuario).on('change', function(ev) {
+        return self.config.slsUser = $(this).val();
+      });
+      $("#" + this.idPassword).on('change', function(ev) {
+        return self.config.slsPassword = $(this).val();
+      });
+      $("#" + this.idViewerTitle).on('change', function(ev) {
+        return self.config.viewerTitle = $(this).val();
+      });
+      $("#" + this.config.configuracoes_id + " button.searchlight-btn-login").on('click', function(ev) {
+        return self.slsapi.user.login(self.config.slsUser, self.config.slsPassword);
+      });
+      $("#" + this.config.configuracoes_id + " button.searchlight-btn-logout").on('click', function(ev) {
+        return self.slsapi.user.logout(function() {
+          return self.onLoginLogout();
+        });
+      });
+      $(document).on('slsapi.user:loginFinish slsapi.user:loginFail', function() {
+        return self.onLoginLogout();
+      });
+      $("#" + this.config.configuracoes_id + " button.searchlight-btn-qrcodigo").on('click', function(ev) {
+        return self.onQRCodeClick();
+      });
+      $("#" + this.config.configuracoes_id + " button.searchlight-btn-salvar").on('click', function(ev) {
+        return self.onSalvar(ev);
+      });
+      $("#" + this.config.configuracoes_id + " button.searchlight-btn-add-fonte").on('click', function(ev) {
+        self.popupFontes.setFonte(null, null);
+        return self.popupFontes.renderPopup();
+      });
+      return $("#" + this.config.container_id).on("fontes:update", function(ev) {
+        return self.renderFontes();
+      });
+    };
 
     TabConfiguracoes.prototype.renderFontes = function() {
       var fonte, html, i, self, _i, _len, _ref;
@@ -26780,64 +27307,10 @@ L.MarkerClusterGroup.include({
 
     TabConfiguracoes.prototype.render = function() {
       var html;
-      html = "<form > <br> <fieldset> <legend>Fontes de dados</legend> <div class='form-group'> <ul class='list-group' id='" + this.idFontesDados + "'></ul> <button type='button' class='btn btn-primary searchlight-btn-add-fonte'>Adicionar fonte</button> </div> </fieldset> <fieldset> <legend>Opções do Mapa</legend> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> </fieldset> <fieldset> <button type='button' class='btn btn-default searchlight-btn-salvar'>Salvar</button> <button type='button' class='btn btn-default searchlight-btn-qrcodigo'>Gerar código para o Searchlight Mobile</button> </fieldset> </form>";
+      html = "<form > <br> <fieldset> <legend>Fontes de dados</legend> <div class='form-group'> <ul class='list-group' id='" + this.idFontesDados + "'></ul> <button type='button' class='btn btn-primary searchlight-btn-add-fonte'>Adicionar fonte</button> </div> </fieldset> <br> <fieldset> <legend>Mapa</legend> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> </fieldset> <br> <fieldset> <legend>Searchlight Storage</legend> <div class='form-group'> <label for='urlsls'>Servidor Searchlight Storage</label> <input type='url' class='form-control' value='" + this.config.urlsls + "' id='" + this.idUrlSLS + "' placeholder='informe o endereço do Searchlight Storage'> </div> <div class='form-inline form-logout'> <div class='form-group'> <label for='urlsls'>Usuario</label> <input type='text' class='form-control' value='' id='" + this.idUsuario + "' placeholder='usuario'> </div> <div class='form-group'> <label for='urlsls'>Senha</label> <input type='password' class='form-control' value='' id='" + this.idPassword + "' placeholder='senha'> </div> <button type='button' class='btn btn-default searchlight-btn-login'>conectar</button> </div> <div class='form-group form-login'> <p>Logado como: <span class='user'></span><p> <button type='button' class='btn btn-default searchlight-btn-logout'>desconectar</button> </div> </fieldset> <br> <fieldset> <legend>Compartilhamento</legend> <div class='form-group'> <label for='viewerTitle'>Título</label> <input type='text' class='form-control' value='" + this.config.viewerTitle + "' id='" + this.idViewerTitle + "' placeholder='informe o título da sua visualização'> </div> <button type='button' class='btn btn-default searchlight-btn-compartilhar'>Compartilhar</button> <button type='button' class='btn btn-default searchlight-btn-qrcodigo'>Vincular com Searchlight Mobile</button> </fieldset> <br> <fieldset> <legend> </legend> <button type='button' class='btn btn-default searchlight-btn-salvar'>Aplicar</button> </fieldset> </form>";
       $("#" + this.config.configuracoes_id).html(html);
       this.renderFontes();
       return this.bind();
-    };
-
-    TabConfiguracoes.prototype.bind = function() {
-      var self;
-      self = this;
-      $("#" + this.idClusterizar).on('change', function(ev) {
-        return self.config.clusterizar = this.checked;
-      });
-      $("#" + this.idUrlOSM).on('change', function(ev) {
-        return self.config.urlosm = $(this).val();
-      });
-      $("#" + this.idUrl).on('change', function(ev) {
-        return self.config.url = $(this).val();
-      });
-      $("#" + this.config.configuracoes_id + " button.searchlight-btn-qrcodigo").on('click', (function(_this) {
-        return function(ev) {
-          var popup, url;
-          popup = Popup.getIS(_this.config);
-          popup.setTitle("<p  style='padding:0px;margin:0px;text-align:center'>QR code para o aplicativo Searchlight Mobile</p>");
-          popup.setBody("<div style='width:300px;margin:0px auto;' id='" + _this.containerQR + "' > </div><br/><p style='text-align:center'> Abra o aplicativo Searchlight Mobile e escolha a opção 'Vincular Visualização'. Posicione o smartphone adequadamente para ler o código QR abaixo:</p>");
-          popup.show();
-          url = "http://sl.wancharle.com/note/id=" + (md5(JSON.stringify(_this.config.toJSON())));
-          return $("#" + _this.containerQR).empty().qrcode({
-            width: 300,
-            height: 300,
-            mode: 0,
-            'text': url
-          });
-        };
-      })(this));
-      $("#" + this.config.configuracoes_id + " button.searchlight-btn-salvar").on('click', (function(_this) {
-        return function(ev) {
-          var searchlight, sl;
-          sl = SL("map-" + _this.config.container_id);
-          $("#" + _this.config.container_id).off();
-          $("#" + _this.config.container_id + " * ").off();
-          sl.markers.off();
-          sl.map.off();
-          sl.markers.clearLayers();
-          sl.map.remove();
-          return searchlight = new Searchlight(_this.config.toJSON());
-        };
-      })(this));
-      $("#" + this.config.configuracoes_id + " button.searchlight-btn-add-fonte").on('click', (function(_this) {
-        return function(ev) {
-          _this.popupFontes.setFonte(null, null);
-          return _this.popupFontes.renderPopup();
-        };
-      })(this));
-      return $("#" + this.config.container_id).on("fontes:update", (function(_this) {
-        return function(ev) {
-          return _this.renderFontes();
-        };
-      })(this));
     };
 
     return TabConfiguracoes;
@@ -26898,5 +27371,19 @@ L.MarkerClusterGroup.include({
     return Dicionario;
 
   })();
+
+  window.string2function = function(func_code) {
+    var m, nome, re;
+    re = /.*function *(\w*) *\( *(\w*) *\) *\{/mg;
+    if ((m = re.exec(func_code)) !== null) {
+      if (m.index === re.lastIndex) {
+        re.lastIndex++;
+      }
+      nome = m[1];
+      return eval("window['" + nome + "']=" + func_code);
+    } else {
+      return null;
+    }
+  };
 
 }).call(this);

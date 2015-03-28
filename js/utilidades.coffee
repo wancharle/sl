@@ -32,4 +32,17 @@ class Dicionario
     else
       return value
 
+window.string2function = (func_code) ->
+  #converte uma string para funcao          code = fonte.func_code
+  re = /.*function *(\w*) *\( *(\w*) *\) *\{/mg;
+  if ((m = re.exec(func_code)) != null) 
+    if (m.index == re.lastIndex) 
+      re.lastIndex++
+    
+    nome = m[1] 
+    return eval("window['#{nome}']=#{func_code}")
+  else
+    return null
+
+
 # vim: set ts=2 sw=2 sts=2 expandtab:

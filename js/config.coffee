@@ -19,7 +19,14 @@ class ConfigFontes
     if fonte.url and typeof fonte.func_code is 'function'
       @fontes.push(fonte)
     else
-      console.error "Error de configuração de fonte:",fonte
+      if typeof fonte.func_code is 'string'
+        try
+            fonte.func_code = string2function(fonte.func_code)
+        catch e
+          console.error e,'Error ao tentar criar funcao de conversao apartir de texto'
+        @fontes.push(fonte)
+      else
+        console.error "Error de configuração de fonte:",fonte
 
   removeFonte: (i) ->
     @fontes.splice(i,1)
@@ -30,7 +37,7 @@ class ConfigFontes
   toJSON:() ->
     array = []
     for f,i in @fontes
-      f.func_text = f.func_code.toString()
+      f.func_code = f.func_code.toString()
       array.push(f)
     return array
 
@@ -60,8 +67,13 @@ class Config
     @clusterizar =  d.get('clusterizar', true)
     
     @useBsPopup = d.get('useBsPopup', true)
-
     @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
+
+    @slsUser = d.get('sls_user','')
+    @slsPassword = ''
+    @urlsls =  d.get('url_sls',"http://sl.wancharle.com.br")
+    @viewerTitle = d.get('viewerTitle','')
+
     @fontes = new ConfigFontes(d)
    
   toJSON: ()->
@@ -72,6 +84,9 @@ class Config
       'clusterizar':  @clusterizar
       'useBsPopup': @useBsPopup
       'url_osm': @urlosm
+      'url_sls': @urlsls
+      'sls_user':@slsUser
+      'viewerTitle':@viewerTitle
       'fontes': @fontes.toJSON()
     }
 
