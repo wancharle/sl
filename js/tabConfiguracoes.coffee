@@ -16,6 +16,7 @@ class TabConfiguracoes
 
     @containerQR = @config.container_id + '-qrcode'
     @idViewerTitle = @config.container_id + '-title'
+    @idUsarCache = @config.container_id + '-usarcache'
 
     @slsapi = new SLSAPI({serverURL:@config.urlsls})
     @slsapi.notebook.getByName('mapas',(data)=> @notebookConfigs=data[0].id)
@@ -103,6 +104,9 @@ class TabConfiguracoes
     self = @
     $("##{@idClusterizar}").on 'change', (ev) ->
       self.config.clusterizar = @.checked
+
+    $("##{@idUsarCache}").on 'change', (ev) ->
+      self.config.usarCache = @.checked
 
     $("##{@idUrlOSM}").on 'change', (ev) ->
       self.config.urlosm = $(@).val()
@@ -230,7 +234,12 @@ class TabConfiguracoes
     <label for='viewerTitle'>Título</label>
     <input type='text' class='form-control' value='#{@config.viewerTitle}' id='#{@idViewerTitle}' placeholder='informe o título da sua visualização'>
   </div>
-  
+   <div class='checkbox'>
+    <label>
+      <input type='checkbox' #{if @config.usarCache then "checked" else ""} id='#{@idUsarCache}'> Fazer cache dos dados no Searchlight Service
+    </label>
+  </div>
+
   <button type='button' class='btn btn-default searchlight-btn-compartilhar'>Compartilhar</button>
   <button type='button' class='btn btn-default searchlight-btn-qrcodigo'>Vincular com Searchlight Mobile</button>
 </fieldset>

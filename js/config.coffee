@@ -65,6 +65,8 @@ class Config
     @esconder_icones =  d.get('esconder_icones', true)
 
     @clusterizar =  d.get('clusterizar', true)
+    @usarCache =  d.get('usarCache', true)
+    @noteid = d.get('noteid',null)
     
     @useBsPopup = d.get('useBsPopup', true)
     @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
@@ -87,6 +89,7 @@ class Config
       'url_sls': @urlsls
       'sls_user':@slsUser
       'viewerTitle':@viewerTitle
+      'usarCache':@usarCache
       'fontes': @fontes.toJSON()
     }
 

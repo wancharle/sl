@@ -19,12 +19,16 @@ class ListaFilhos
 
 class Marcador
   constructor:(geoItem,config)->
+    @config = config
     @m = null
     @id = geoItem.id
     @id_parent = geoItem.id_parent
-    @config = config
-    @latitude = parseFloat(geoItem.latitude.replace(',','.'))
-    @longitude = parseFloat(geoItem.longitude.replace(',','.'))
+    try
+      @latitude = parseFloat(geoItem.latitude)
+      @longitude = parseFloat(geoItem.longitude)
+    catch
+      @latitude = parseFloat(geoItem.latitude.replace(',','.'))
+      @longitude = parseFloat(geoItem.longitude.replace(',','.'))
     @texto = geoItem.texto
     if geoItem.icon
       @icon = geoItem.icon

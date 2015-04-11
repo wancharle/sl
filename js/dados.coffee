@@ -16,8 +16,15 @@ class Dados
     @categorias = {}
     @categorias_id = {}
 
-  get_data_fonte: (fonte)=> 
+  get_data_fonte: (fonte,i)=> 
     # obtendo dados
+    console.log(@config)
+    if @config.usarCache and @config.noteid
+      getJSON("#{@config.urlsls}/note/listaExternal?noteid=#{@config.noteid}&fonteIndex=#{i}", (data)=>
+              fonte2 ={ url:fonte.url,func_code: (i)-> return i}           
+              @carregaDados(data,fonte2)
+      )
+      return
     if fonte.url.indexOf("docs.google.com/spreadsheet") > -1 
       Tabletop.init( { 'key':fonte.url, 'callback':  (data)=>
           @carregaDados(data,fonte)
@@ -48,7 +55,7 @@ class Dados
     $("##{@config.container_id}").trigger("dados:carregando")
     for fonte, i in @config.fontes.getFontes()
       #fonte = @config.fontes.getFonte("0") # todo generalizar para mis de uma fonte.
-      @get_data_fonte(fonte)
+      @get_data_fonte(fonte,i)
 
 
   carregaDados: (data,fonte)->

@@ -26067,6 +26067,8 @@ L.MarkerClusterGroup.include({
       this.Icones = d.get('icones', null);
       this.esconder_icones = d.get('esconder_icones', true);
       this.clusterizar = d.get('clusterizar', true);
+      this.usarCache = d.get('usarCache', true);
+      this.noteid = d.get('noteid', null);
       this.useBsPopup = d.get('useBsPopup', true);
       this.urlosm = d.get('url_osm', "http://{s}.tile.osm.org/{z}/{x}/{y}.png");
       this.slsUser = d.get('sls_user', '');
@@ -26087,6 +26089,7 @@ L.MarkerClusterGroup.include({
         'url_sls': this.urlsls,
         'sls_user': this.slsUser,
         'viewerTitle': this.viewerTitle,
+        'usarCache': this.usarCache,
         'fontes': this.fontes.toJSON()
       };
     };
@@ -26095,13 +26098,14 @@ L.MarkerClusterGroup.include({
 
   })();
 
-  scriptEls = document.getElementsByTagName('script');
-
-  thisScriptEl = scriptEls[scriptEls.length - 1];
-
-  scriptPath = thisScriptEl.src;
-
-  scriptFolder = scriptPath.substr(0, scriptPath.lastIndexOf('/') + 1);
+  if (!window.scriptFolder) {
+    scriptEls = document.getElementsByTagName('script');
+    thisScriptEl = scriptEls[scriptEls.length - 1];
+    scriptPath = thisScriptEl.src;
+    scriptFolder = scriptPath.substr(0, scriptPath.lastIndexOf('/') + 1);
+  } else {
+    scriptFolder = window.scriptFolder;
+  }
 
   $("<link/>", {
     rel: "stylesheet",
@@ -26411,7 +26415,23 @@ L.MarkerClusterGroup.include({
       return this.categorias_id = {};
     };
 
-    Dados.prototype.get_data_fonte = function(fonte) {
+    Dados.prototype.get_data_fonte = function(fonte, i) {
+      console.log(this.config);
+      if (this.config.usarCache && this.config.noteid) {
+        getJSON("" + this.config.urlsls + "/note/listaExternal?noteid=" + this.config.noteid + "&fonteIndex=" + i, (function(_this) {
+          return function(data) {
+            var fonte2;
+            fonte2 = {
+              url: fonte.url,
+              func_code: function(i) {
+                return i;
+              }
+            };
+            return _this.carregaDados(data, fonte2);
+          };
+        })(this));
+        return;
+      }
       if (fonte.url.indexOf("docs.google.com/spreadsheet") > -1) {
         return Tabletop.init({
           'key': fonte.url,
@@ -26463,7 +26483,7 @@ L.MarkerClusterGroup.include({
       _results = [];
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         fonte = _ref[i];
-        _results.push(this.get_data_fonte(fonte));
+        _results.push(this.get_data_fonte(fonte, i));
       }
       return _results;
     };
@@ -26690,12 +26710,17 @@ L.MarkerClusterGroup.include({
 
   Marcador = (function() {
     function Marcador(geoItem, config) {
+      this.config = config;
       this.m = null;
       this.id = geoItem.id;
       this.id_parent = geoItem.id_parent;
-      this.config = config;
-      this.latitude = parseFloat(geoItem.latitude.replace(',', '.'));
-      this.longitude = parseFloat(geoItem.longitude.replace(',', '.'));
+      try {
+        this.latitude = parseFloat(geoItem.latitude);
+        this.longitude = parseFloat(geoItem.longitude);
+      } catch (_error) {
+        this.latitude = parseFloat(geoItem.latitude.replace(',', '.'));
+        this.longitude = parseFloat(geoItem.longitude.replace(',', '.'));
+      }
       this.texto = geoItem.texto;
       if (geoItem.icon) {
         this.icon = geoItem.icon;
@@ -27133,6 +27158,7 @@ L.MarkerClusterGroup.include({
       this.idPassword = config.container_id + '-password';
       this.containerQR = this.config.container_id + '-qrcode';
       this.idViewerTitle = this.config.container_id + '-title';
+      this.idUsarCache = this.config.container_id + '-usarcache';
       this.slsapi = new SLSAPI({
         serverURL: this.config.urlsls
       });
@@ -27233,6 +27259,9 @@ L.MarkerClusterGroup.include({
       $("#" + this.idClusterizar).on('change', function(ev) {
         return self.config.clusterizar = this.checked;
       });
+      $("#" + this.idUsarCache).on('change', function(ev) {
+        return self.config.usarCache = this.checked;
+      });
       $("#" + this.idUrlOSM).on('change', function(ev) {
         return self.config.urlosm = $(this).val();
       });
@@ -27307,7 +27336,7 @@ L.MarkerClusterGroup.include({
 
     TabConfiguracoes.prototype.render = function() {
       var html;
-      html = "<form > <br> <fieldset> <legend>Fontes de dados</legend> <div class='form-group'> <ul class='list-group' id='" + this.idFontesDados + "'></ul> <button type='button' class='btn btn-primary searchlight-btn-add-fonte'>Adicionar fonte</button> </div> </fieldset> <br> <fieldset> <legend>Mapa</legend> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> </fieldset> <br> <fieldset> <legend>Searchlight Storage</legend> <div class='form-group'> <label for='urlsls'>Servidor Searchlight Storage</label> <input type='url' class='form-control' value='" + this.config.urlsls + "' id='" + this.idUrlSLS + "' placeholder='informe o endereço do Searchlight Storage'> </div> <div class='form-inline form-logout'> <div class='form-group'> <label for='urlsls'>Usuario</label> <input type='text' class='form-control' value='' id='" + this.idUsuario + "' placeholder='usuario'> </div> <div class='form-group'> <label for='urlsls'>Senha</label> <input type='password' class='form-control' value='' id='" + this.idPassword + "' placeholder='senha'> </div> <button type='button' class='btn btn-default searchlight-btn-login'>conectar</button> </div> <div class='form-group form-login'> <p>Logado como: <span class='user'></span><p> <button type='button' class='btn btn-default searchlight-btn-logout'>desconectar</button> </div> </fieldset> <br> <fieldset> <legend>Compartilhamento</legend> <div class='form-group'> <label for='viewerTitle'>Título</label> <input type='text' class='form-control' value='" + this.config.viewerTitle + "' id='" + this.idViewerTitle + "' placeholder='informe o título da sua visualização'> </div> <button type='button' class='btn btn-default searchlight-btn-compartilhar'>Compartilhar</button> <button type='button' class='btn btn-default searchlight-btn-qrcodigo'>Vincular com Searchlight Mobile</button> </fieldset> <br> <fieldset> <legend> </legend> <button type='button' class='btn btn-default searchlight-btn-salvar'>Aplicar</button> </fieldset> </form>";
+      html = "<form > <br> <fieldset> <legend>Fontes de dados</legend> <div class='form-group'> <ul class='list-group' id='" + this.idFontesDados + "'></ul> <button type='button' class='btn btn-primary searchlight-btn-add-fonte'>Adicionar fonte</button> </div> </fieldset> <br> <fieldset> <legend>Mapa</legend> <div class='form-group'> <label for='urlosm'>Servidor Open Street Map</label> <input type='url' class='form-control' value='" + this.config.urlosm + "' id='" + this.idUrlOSM + "' placeholder='informe uma url do tipo OSM'> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.config.clusterizar ? "checked" : "") + " id='" + this.idClusterizar + "'> Agrupar marcadores </label> </div> </fieldset> <br> <fieldset> <legend>Searchlight Storage</legend> <div class='form-group'> <label for='urlsls'>Servidor Searchlight Storage</label> <input type='url' class='form-control' value='" + this.config.urlsls + "' id='" + this.idUrlSLS + "' placeholder='informe o endereço do Searchlight Storage'> </div> <div class='form-inline form-logout'> <div class='form-group'> <label for='urlsls'>Usuario</label> <input type='text' class='form-control' value='' id='" + this.idUsuario + "' placeholder='usuario'> </div> <div class='form-group'> <label for='urlsls'>Senha</label> <input type='password' class='form-control' value='' id='" + this.idPassword + "' placeholder='senha'> </div> <button type='button' class='btn btn-default searchlight-btn-login'>conectar</button> </div> <div class='form-group form-login'> <p>Logado como: <span class='user'></span><p> <button type='button' class='btn btn-default searchlight-btn-logout'>desconectar</button> </div> </fieldset> <br> <fieldset> <legend>Compartilhamento</legend> <div class='form-group'> <label for='viewerTitle'>Título</label> <input type='text' class='form-control' value='" + this.config.viewerTitle + "' id='" + this.idViewerTitle + "' placeholder='informe o título da sua visualização'> </div> <div class='checkbox'> <label> <input type='checkbox' " + (this.config.usarCache ? "checked" : "") + " id='" + this.idUsarCache + "'> Fazer cache dos dados no Searchlight Service </label> </div> <button type='button' class='btn btn-default searchlight-btn-compartilhar'>Compartilhar</button> <button type='button' class='btn btn-default searchlight-btn-qrcodigo'>Vincular com Searchlight Mobile</button> </fieldset> <br> <fieldset> <legend> </legend> <button type='button' class='btn btn-default searchlight-btn-salvar'>Aplicar</button> </fieldset> </form>";
       $("#" + this.config.configuracoes_id).html(html);
       this.renderFontes();
       return this.bind();

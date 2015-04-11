@@ -1,7 +1,10 @@
-scriptEls = document.getElementsByTagName( 'script' )
-thisScriptEl = scriptEls[scriptEls.length - 1]
-scriptPath = thisScriptEl.src
-scriptFolder = scriptPath.substr(0, scriptPath.lastIndexOf( '/' )+1 )
+if not window.scriptFolder
+    scriptEls = document.getElementsByTagName( 'script' )
+    thisScriptEl = scriptEls[scriptEls.length - 1]
+    scriptPath = thisScriptEl.src
+    scriptFolder = scriptPath.substr(0, scriptPath.lastIndexOf( '/' )+1 )
+else
+    scriptFolder = window.scriptFolder
 
 
 $("<link/>", {
