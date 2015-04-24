@@ -25649,7 +25649,7 @@ L.MarkerClusterGroup.include({
 
 }(window, document));
 (function() {
-  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, ConfigFontes, Controle, Dados, Dicionario, ListaFilhos, Marcador, PilhaDeZoom, Popup, PopupFontes, SENADO_FEDERAL, Searchlight, TabConfiguracoes, TabList, UFES, attribution, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl,
+  var BIBLIOTECA, CEMUNI, CT, ClusterCtr, Config, ConfigFontes, Controle, Dados, Dicionario, ListaFilhos, Marcador, PilhaDeZoom, Popup, PopupFontes, SENADO_FEDERAL, Searchlight, TabConfiguracoes, TabList, UFES, attribution, parseFloatPTBR, public_spreadsheet_url, referencia_atual, scriptEls, scriptFolder, scriptPath, sl_referencias, thisScriptEl, window,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -26714,13 +26714,8 @@ L.MarkerClusterGroup.include({
       this.m = null;
       this.id = geoItem.id;
       this.id_parent = geoItem.id_parent;
-      try {
-        this.latitude = parseFloat(geoItem.latitude);
-        this.longitude = parseFloat(geoItem.longitude);
-      } catch (_error) {
-        this.latitude = parseFloat(geoItem.latitude.replace(',', '.'));
-        this.longitude = parseFloat(geoItem.longitude.replace(',', '.'));
-      }
+      this.latitude = parseFloatPTBR(geoItem.latitude);
+      this.longitude = parseFloatPTBR(geoItem.longitude);
       this.texto = geoItem.texto;
       if (geoItem.icon) {
         this.icon = geoItem.icon;
@@ -27346,6 +27341,10 @@ L.MarkerClusterGroup.include({
 
   })();
 
+  if (!window) {
+    window = {};
+  }
+
   window.getJSONP = function(url, func) {
     return $.ajax({
       'url': url,
@@ -27414,5 +27413,17 @@ L.MarkerClusterGroup.include({
       return null;
     }
   };
+
+  parseFloatPTBR = function(str) {
+    var itens;
+    itens = String(str).match(/^(-*\d+)([\,\.]*)(\d+)?$/);
+    if (itens[2]) {
+      return parseFloat(itens[1] + "." + itens[3]);
+    } else {
+      return parseFloat(itens[1]);
+    }
+  };
+
+  window.parseFloatPTBR = parseFloatPTBR;
 
 }).call(this);

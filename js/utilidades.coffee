@@ -1,4 +1,5 @@
-
+if not window
+  window = {}
 
 window.getJSONP= (url,func)->
   $.ajax({ 
@@ -44,5 +45,27 @@ window.string2function = (func_code) ->
   else
     return null
 
+# parseFloatPTBR :: String -> Float
+#
+# Converte uma string de um numero float no formato internacional e brasileiro num numero Float
+# 
+# Exemplos:
+# > parseFloatPTBR(20.1)
+# 20.1
+# > parseFloatPTBR("20.1")
+# 20.1
+# > parseFloatPTBR("20,1")
+# 20.1
+# > parseFloatPTBR("-20.1")
+# -20.1
+# > parseFloatPTBR("-20,1")
+# -20.1
+parseFloatPTBR = (str) ->
+  itens = String(str).match(/^(-*\d+)([\,\.]*)(\d+)?$/)
+  if itens[2]
+    return parseFloat(itens[1]+"."+itens[3])
+  else
+    return parseFloat(itens[1])
+window.parseFloatPTBR = parseFloatPTBR
 
 # vim: set ts=2 sw=2 sts=2 expandtab:

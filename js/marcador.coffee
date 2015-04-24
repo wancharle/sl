@@ -23,12 +23,8 @@ class Marcador
     @m = null
     @id = geoItem.id
     @id_parent = geoItem.id_parent
-    try
-      @latitude = parseFloat(geoItem.latitude)
-      @longitude = parseFloat(geoItem.longitude)
-    catch
-      @latitude = parseFloat(geoItem.latitude.replace(',','.'))
-      @longitude = parseFloat(geoItem.longitude.replace(',','.'))
+    @latitude = parseFloatPTBR(geoItem.latitude)
+    @longitude = parseFloatPTBR(geoItem.longitude)
     @texto = geoItem.texto
     if geoItem.icon
       @icon = geoItem.icon
