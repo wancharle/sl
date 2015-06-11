@@ -1,3 +1,4 @@
+
 class ListaFilhos
   constructor: (marcador_pai)->
     @dados = Dados.getIS(marcador_pai.config)
@@ -71,6 +72,6 @@ class Marcador
     popup.show()
 
 
-    
+module.exports = {ListaFilhos:ListaFilhos,Marcador:Marcador}
 
 # vim: set ts=2 sw=2 sts=2 expandtab:

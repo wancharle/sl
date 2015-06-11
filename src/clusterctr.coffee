@@ -1,3 +1,4 @@
+PilhaDeZoom = require('./pilhadezoom').PilhaDeZoom
 
 class ClusterCtr
   constructor: (sl) ->
@@ -171,4 +172,5 @@ class ClusterCtr
           @showPopup(@sl.config.map_id)
         , 600)
 
+module.exports = { ClusterCtr:ClusterCtr }
 # vim: set ts=2 sw=2 sts=2 expandtab:

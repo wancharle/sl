@@ -16,12 +16,9 @@
   "dependencies": {
     "jquery": "~2.1.1",
     "leaflet": "~0.7.3",
-    "tabletop": "~1.3.5",
-    "dms2dec-PTBR.js": "git@github.com:wancharle/dms2dec.js.git#~1.0.2",
-    "papaparse.js": "~3.1.2",
     "bootstrap": "~3.2.0",
-    "blueimp-md5": "~1.1.0",
     "jquery-qrcode": "*",
-    "slsapi.js": "https://wancharle@bitbucket.org/wancharle/searchlight-service-api.git"
+    "slsapi.js": "https://wancharle@bitbucket.org/wancharle/searchlight-service-api.git",
+    "superagent": "~1.2.0"
   }
 }

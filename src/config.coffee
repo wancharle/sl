@@ -1,3 +1,5 @@
+Dicionario = require('./utilidades').Dicionario
+
 class ConfigFontes
   constructor: (d)->
     @fontes = []
@@ -95,8 +97,7 @@ class Config
 
       
               
-
-
+module.exports = {Config:Config,ConfigFontes:ConfigFontes}
 
 # vim: set ts=2 sw=2 sts=2 expandtab:
 

@@ -94,3 +94,4 @@ window.SLUndoRedoControl = L.Control.extend({
         return container
 })
 
+module.exports = {SLControl:SLControl,SLUndoRedoControl:SLUndoRedoControl}

@@ -1,6 +1,7 @@
 #classe responsavel pela visalizcao em lista
-#
 
+Popup = require('./bspopup').Popup
+Dados = require('./dados').Dados
 class TabList
   @instances = {}
   @getIS: (config)-> TabList.instances[config.container_id]
@@ -44,5 +45,5 @@ class TabList
     @popup.show()
     return false
     
-     
+module.exports = {TabList:TabList}
 # vim: set ts=2 sw=2 sts=2 expandtab:

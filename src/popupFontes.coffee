@@ -1,4 +1,6 @@
 # classe responsavel pela visualizacao da aba opcoes
+
+Popup = require('./bspopup').Popup
 class PopupFontes
   constructor: (config) ->
     @idUrl = config.container_id + '-url'
@@ -69,4 +71,5 @@ class PopupFontes
     @popupValido = true
     return true
       
+module.exports = {PopupFontes:PopupFontes}
 # vim: set ts=2 sw=2 sts=2 expandtab:

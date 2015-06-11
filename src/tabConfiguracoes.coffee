@@ -1,4 +1,5 @@
 # classe responsavel pela visualizacao da aba opcoes
+PopupFontes = require('./popupFontes').PopupFontes
 
 class TabConfiguracoes
   constructor: (config)->
@@ -255,6 +256,6 @@ class TabConfiguracoes
     @renderFontes()
     @bind()
 
-
+module.exports = {TabConfiguracoes:TabConfiguracoes}
 # vim: set ts=2 sw=2 sts=2 expandtab:
 

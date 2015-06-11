@@ -1,3 +1,6 @@
+require('./control')
+ClusterCtr = require('./clusterctr').ClusterCtr
+
 class Controle
   @instances = {}
   
@@ -147,5 +150,5 @@ class Controle
       @sl.markers.fire("data:loaded")
       @sl.control.atualizarIconesMarcVisiveis()
 
-
+module.exports = {Controle:Controle}
 # vim: set ts=2 sw=2 sts=2 expandtab:

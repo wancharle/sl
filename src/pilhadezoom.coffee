@@ -96,4 +96,5 @@ class PilhaDeZoom
   esta_vazia: () =>
     return @pilha.length ==0
 
+module.exports= {PilhaDeZoom:PilhaDeZoom}
 # vim: set ts=2 sw=2 sts=2 expandtab:

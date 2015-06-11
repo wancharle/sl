@@ -1,5 +1,3 @@
-if not window
-  window = {}
 
 window.getJSONP= (url,func)->
   $.ajax({ 
@@ -68,4 +66,5 @@ parseFloatPTBR = (str) ->
     return parseFloat(itens[1])
 window.parseFloatPTBR = parseFloatPTBR
 
+module.exports = {Dicionario:Dicionario}
 # vim: set ts=2 sw=2 sts=2 expandtab:

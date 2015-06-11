@@ -13,7 +13,7 @@
 <div id="google"> </div>
 <script>
 portoalegrecc_json = "http://portoalegre.cc/causes/visibles?topLeftY=-29.993308319952344&topLeftX=-51.07286486145017&bottomRightY=-30.127023880027313&bottomRightX=-51.33413347717283&currentZoom=1&maxZoom=6"
-pacc_jsonp = "https://dl.dropbox.com/u/877911/portoalegre.js"
+pacc_jsonp = "http://wancharle.com.br/sl/portoalegre.cc.json"
 google_docs = "https://docs.google.com/spreadsheet/pub?key=0AhU-mW4ERuT5dHBRcGF5eml1aGhnTzl0RXh3MHdVakE&single=true&gid=0&output=html"
 
 
@@ -47,6 +47,7 @@ function portoalegre_cc(map_id){
         'url':pacc_jsonp,
         'convert':convert_item_porto,
        // 'icones':Icones,
+        'usarCache':false,
         'container_id':'porto'
         }   
     mps2 = new Searchlight(conf)
@@ -77,6 +78,7 @@ function pac_cc(map_id){
    
     conf = {
         'url':'http://wancharle.com.br/sl/PAC_2014_04.csv',
+        'usarCache':false,
         'convert':convert_item_pac,
        // 'icones':Icones,
         'container_id':'pac'
@@ -97,8 +99,8 @@ function gdocs(){
 $(document).ready(function(){
    console.log('ready') 
    //main()
-   //portoalegre_cc();
-   pac_cc();
+   portoalegre_cc();
+   //pac_cc();
    gdocs();
     });
 </script>

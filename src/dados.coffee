@@ -79,8 +79,8 @@ class Dados
 
     return itens
 
+  # retorna a lista de marcadores de uma determinada categoria
   getCatByName: (cat_name)->
-    # retorna a lista de marcadores de uma determinada categoria
     return @categorias[cat_name]
 
   _getCatOrCreate: (m)=>
@@ -144,4 +144,5 @@ class Dados
   getCategorias: ->
     return (cat for cat in Object.keys(@categorias))
 
+module.exports = {Dados:Dados}
 # vim: set ts=2 sw=2 sts=2 expandtab:

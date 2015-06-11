@@ -63,4 +63,5 @@ class Popup
     $("##{@id}").off('hide.bs.modal')
     $("##{@id}").on('hide.bs.modal',callback)
 
+module.exports = {Popup:Popup}
 # vim: set ts=2 sw=2 sts=2 expandtab:
