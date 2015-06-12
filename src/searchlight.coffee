@@ -1,13 +1,15 @@
 
 
+
+
 Dados = require('./dados').Dados
-Config = require('./config').Config
-Marcador = require('./marcador').Marcador
 Controle = require('./controle').Controle
+Config = require('./config').Config
+PopupMarcador = require('./popupMarcador').PopupMarcador
 TabList = require('./lista').TabList
 TabConfiguracoes = require('./tabConfiguracoes').TabConfiguracoes
 Popup = require('./bspopup').Popup
-L.Icon.Default.imagePath = "images/leaflet"
+
 
 # marcadores
 SENADO_FEDERAL = [-15.799088, -47.865350]
@@ -34,16 +36,16 @@ class Searchlight
   constructor: (opcoes={}) ->
     @config = new Config(opcoes)
     @slsapi = new SLSAPI(opcoes)
+    @slsapi.on SLSAPI.Config.EVENT_READY, (id)=>
+      sl_referencias[@config.map_id]  = this 
 
-    sl_referencias[@config.map_id]  = this 
+      @create()
+      $('.collapse').collapse()
 
-    @create()
-    $('.collapse').collapse()
-
-    @dados = new Dados(this)
-    @tabList = new TabList(@config)
-    @tabConfiguracoes = new TabConfiguracoes(@config)
-    @dados.get_data()
+      @dados = new Dados(this)
+      @dados.get_data()
+      @tabList = new TabList(@config)
+      @tabConfiguracoes = new TabConfiguracoes(@config,@dados)
 
   getIS: =>  # retorna a string da instancia
     return "SL(\"#{@config.map_id}\")" 
@@ -76,11 +78,13 @@ class Searchlight
     @control = new  Controle(this)
    
     # amarrando eventos
-    $("##{@config.container_id}").on 'dados:carregando', () => 
+    @slsapi.on SLSAPI.dataPool.DataPool.EVENT_LOAD_START, () => 
+      console.log('dados carregando')
       @map.spin(true)
 
   
-    $("##{@config.container_id}").on 'dados:carregados', () => 
+    SLSAPI.events.on @slsapi.config.id,Dados.EVENT_DATA_LOADED, () => 
+      console.log('segundo evento')
       @markers.clearLayers()
       @dados.addMarkersTo(@markers)
       @control.addCatsToControl(@config.map_id)
@@ -116,7 +120,7 @@ class Searchlight
     @map_ultimo_zoom =  @map.getZoom()
     @map_ultimo_center = @map.getCenter()
 Searchlight.Popup = Popup
-Searchlight.Marcador = Marcador
+Searchlight.PopupMarcador= PopupMarcador
 window.Searchlight = Searchlight
 
 # vim: set ts=2 sw=2 sts=2 expandtab:

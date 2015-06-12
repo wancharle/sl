@@ -2,7 +2,7 @@
 PopupFontes = require('./popupFontes').PopupFontes
 
 class TabConfiguracoes
-  constructor: (config)->
+  constructor: (config,@dados)->
     @config = config
    
     @idFontesDados = @config.container_id + '-ulFontesDados'
@@ -19,18 +19,16 @@ class TabConfiguracoes
     @idViewerTitle = @config.container_id + '-title'
     @idUsarCache = @config.container_id + '-usarcache'
 
-    @slsapi = new SLSAPI({serverURL:@config.urlsls})
-    @slsapi.notebook.getByName('mapas',(data)=> @notebookConfigs=data[0].id)
 
     @render()
     @onLoginLogout()
 
   onLoginLogout:()->
-    if @slsapi.user.isLogged()
+    if @dados.api.user.isLogged()
       $("##{@config.container_id} .form-login").show()
       $("##{@config.container_id} .form-logout").hide()
     
-      $("##{@config.container_id} .form-login .user").html(@slsapi.user.getUsuario())
+      $("##{@config.container_id} .form-login .user").html(@dados.api.user.getUsuario())
     else
       $("##{@config.container_id} .form-logout").show()
       $("##{@config.container_id} .form-login").hide()
@@ -154,7 +152,7 @@ class TabConfiguracoes
 
   renderFontes: ()->
     html = ""
-    for fonte,i in @config.fontes.getFontes()
+    for fonte,i in @dados.getFontes()
       html+="<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='#{i}' href='#'>Alterar</a> | <a class='link-remover' data-fonte='#{i}' href='#'>Remover</a></span> <a href='#{fonte.url}' target='_blank'>#{fonte.url}</a></span></li>"
 
     $("##{@idFontesDados}").html(html)
@@ -164,15 +162,15 @@ class TabConfiguracoes
 
     $("##{@config.configuracoes_id} a.link-remover").on 'click', (ev) ->
       id_fonte = $(this).data('fonte')
-      fonte = self.config.fontes.getFonte(id_fonte)
+      fonte = self.dados.getFonte(id_fonte)
       if confirm("tem certeza que deseja remover esta fonte de dados:\n#{fonte.url}")
-        self.config.fontes.removeFonte(id_fonte)
+        self.dados.removeFonte(id_fonte)
         self.renderFontes()
 
 
     $("##{@config.configuracoes_id} a.link-alterar").on 'click', (ev) ->
       id_fonte = $(this).data('fonte')
-      fonte = self.config.fontes.getFonte(id_fonte)
+      fonte = self.dados.getFonte(id_fonte)
       self.popupFontes.setFonte(fonte,id_fonte)
       self.popupFontes.renderPopup(null,'Alterar') 
 

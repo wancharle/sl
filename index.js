@@ -24,8 +24,8 @@ function slwan(data){
 function portoalegre_cc(map_id){
    
     conf = {
-        'url':pacc_jsonp,
-        'convert':convert_item_porto,
+        'dataSources':[ {url:pacc_jsonp,
+        'func_code':convert_item_porto.toString()}],
        // 'icones':Icones,
         'container_id':'porto'
         }   

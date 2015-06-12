@@ -1,4 +1,7 @@
-require('./control')
+controls = require('./control')
+SLControl = controls.SLControl
+SLUndoRedoControl = controls.SLUndoRedoControl
+
 ClusterCtr = require('./clusterctr').ClusterCtr
 
 class Controle

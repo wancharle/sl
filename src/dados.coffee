@@ -1,4 +1,7 @@
+Marcador = require('./marcador').Marcador
+
 class Dados
+  @EVENT_DATA_LOADED = 'dados:loaded.slmapa'
   @instances = {}
 
   @getIS: (config)->
@@ -7,6 +10,7 @@ class Dados
   constructor: (sl)->
     Dados.instances[sl.config.container_id]=@
     @sl = sl
+    @api = sl.slsapi
     @config = sl.config
     @clear()
 
@@ -16,60 +20,35 @@ class Dados
     @categorias = {}
     @categorias_id = {}
 
-  get_data_fonte: (fonte,i)=> 
-    # obtendo dados
-    console.log(@config)
-    if @config.usarCache and @config.noteid
-      getJSON("#{@config.urlsls}/note/listaExternal?noteid=#{@config.noteid}&fonteIndex=#{i}", (data)=>
-              fonte2 ={ url:fonte.url,func_code: (i)-> return i}           
-              @carregaDados(data,fonte2)
-      )
-      return
-    if fonte.url.indexOf("docs.google.com/spreadsheet") > -1 
-      Tabletop.init( { 'key':fonte.url, 'callback':  (data)=>
-          @carregaDados(data,fonte)
-      , 'simpleSheet': true } )
-    else
-      if fonte.url.slice(0,4)=="http"
-        if fonte.url.slice(-4)==".csv"
-          Papa.parse(fonte.url, {
-            header:true,
-            download: true,
-            error: ()-> alert("Erro ao baixar arquivo csv da fonte de dados:\n#{fonte.url}"),
-            complete: (results, file) =>
-              @carregaDados(results['data'],fonte)
-            })
 
-        else
-          getJSONP(fonte.url, (data)=>
-              @carregaDados(data,fonte)
-          )
-      else
-        getJSON(fonte.url, (data) =>
-          @carregaDados(data,fonte)
-        )
+  getFonte:(i)-> @dataPool.getDataSource(i)
+  getFontes:-> @dataPool.getDataSources()
 
   get_data: () =>
-    obj = this
-    @fontes_carregadas = []
     $("##{@config.container_id}").trigger("dados:carregando")
-    for fonte, i in @config.fontes.getFontes()
-      #fonte = @config.fontes.getFonte("0") # todo generalizar para mis de uma fonte.
-      @get_data_fonte(fonte,i)
+    @dataPool = SLSAPI.dataPool.createDataPool(@api.mashup)
+    @dataPool.loadAllData()
+    @api.off(SLSAPI.dataPool.DataPool.EVENT_LOAD_STOP)
+    @api.on(SLSAPI.dataPool.DataPool.EVENT_LOAD_STOP, (dataPool)=>
+      for source in dataPool.dataSources 
+        @carregaDados(source.notes,source)
+
+      $("##{@config.container_id}").trigger('dados:carregados')
+      SLSAPI.events.trigger(@api.config.id,Dados.EVENT_DATA_LOADED)
+    )
+
 
 
   carregaDados: (data,fonte)->
-    @fontes_carregadas.push(fonte)
+    console.log("fonte carregando: #{fonte.url}")
     try
-      for d, i in data
-        @addItem(d,fonte.func_code)
+      for geoItem in data
+        @addItemMarkers(geoItem)
     catch e
       console.error(e.toString())
       @markers.fire("data:loaded")
       alert("Não foi possivel carregar os dados do mapa. Verifique se a fonte de dados está formatada corretamente.")
       return
-    if @fontes_carregadas.length == @config.fontes.getFontes().length
-      $("##{@config.container_id}").trigger('dados:carregados')
   
   getItensCount:() ->
     # retorna o total de itens por url
@@ -104,25 +83,8 @@ class Dados
       @marcadores_filhos[pai_id] = [ ]
     @marcadores_filhos[pai_id].push(filho)
 
-  addItem : (i,func_convert) =>
-    try
-      geoItem = func_convert(i)
-    catch e 
-      if Searchlight.debug
-        console.error("Erro em Dados::addItem: #{e.message}",i)
-      geoItem = null
-          
-    if geoItem
-      # se o objeto nao tiver id um hash_id eh gerado.
-      if not geoItem.id
-       geoItem.id = "#{parseFloat(geoItem.latitude).toFixed(7)}#{parseFloat(geoItem.longitude).toFixed(7)}#{md5(JSON.stringify(geoItem))}" 
-
+  addItemMarkers : (geoItem) =>
       m =  new Marcador(geoItem,@config)
-      @marcadores[m.id]  = m
-      if geoItem.id_parent
-        @adicioneFilho(geoItem.id_parent,m)
-
-
       cat = @_getCatOrCreate(m)
       cat.push(m)
 
@@ -144,5 +106,6 @@ class Dados
   getCategorias: ->
     return (cat for cat in Object.keys(@categorias))
 
-module.exports = {Dados:Dados}
+module.exports = {'Dados':Dados}
+
 # vim: set ts=2 sw=2 sts=2 expandtab:
