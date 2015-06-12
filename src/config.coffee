@@ -1,9 +1,10 @@
 Dicionario = require('./utilidades').Dicionario
 
 class Config
-  constructor: (opcoes)->
-    d = new Dicionario(opcoes)
-    @d = d
+  constructor: (@apiconf)->
+    @apiconf.register(@)
+
+  parseOpcoes: (d)->
     @container_id =  d.get('container_id','map')
     @tab_id = "tab-"+ @container_id
     @map_id = "map-"+ @container_id
@@ -14,8 +15,6 @@ class Config
     @esconder_icones =  d.get('esconder_icones', true)
 
     @clusterizar =  d.get('clusterizar', true)
-    @usarCache =  d.get('usarCache', true)
-    @noteid = d.get('noteid',null)
     
     @useBsPopup = d.get('useBsPopup', true)
     @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
@@ -38,7 +37,6 @@ class Config
       'sls_user':@slsUser
       'viewerTitle':@viewerTitle
       'usarCache':@usarCache
-      'fontes': @fontes.toJSON()
     }
 
       

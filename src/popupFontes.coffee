@@ -2,7 +2,7 @@
 
 Popup = require('./bspopup').Popup
 class PopupFontes
-  constructor: (config) ->
+  constructor: (config,@dados) ->
     @idUrl = config.container_id + '-url'
     @idFunc = config.container_id + '-func'
     @popup = Popup.getIS(config)
@@ -44,7 +44,7 @@ class PopupFontes
       @fonte.func_code = func_code
     else
       console.log('adicionando  nova fonte')
-      @config.fontes.addFonte({url:url,func_code:func_code})
+      @dados.addDataSource({url:url,func_code:func_code})
     $("##{@config.container_id}").trigger("fontes:update")
 
   popupValidate: (e)->

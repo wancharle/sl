@@ -6,7 +6,7 @@ class TabConfiguracoes
     @config = config
    
     @idFontesDados = @config.container_id + '-ulFontesDados'
-    @popupFontes = new PopupFontes(config)
+    @popupFontes = new PopupFontes(config,@dados)
 
     @idUrlOSM = config.container_id + '-urlosm'
     @idClusterizar = @config.container_id + '-clusterizar'
@@ -96,7 +96,9 @@ class TabConfiguracoes
     sl.markers.clearLayers()
     sl.map.remove()
 
-    searchlight = new Searchlight(@config.toJSON())
+    newconf = @config.apiconf.toJSON()
+    newconf.namespace = Math.random()
+    searchlight = new Searchlight(newconf)
 
 
   bind: ()->
@@ -104,8 +106,6 @@ class TabConfiguracoes
     $("##{@idClusterizar}").on 'change', (ev) ->
       self.config.clusterizar = @.checked
 
-    $("##{@idUsarCache}").on 'change', (ev) ->
-      self.config.usarCache = @.checked
 
     $("##{@idUrlOSM}").on 'change', (ev) ->
       self.config.urlosm = $(@).val()
@@ -232,11 +232,6 @@ class TabConfiguracoes
   <div class='form-group'>
     <label for='viewerTitle'>Título</label>
     <input type='text' class='form-control' value='#{@config.viewerTitle}' id='#{@idViewerTitle}' placeholder='informe o título da sua visualização'>
-  </div>
-   <div class='checkbox'>
-    <label>
-      <input type='checkbox' #{if @config.usarCache then "checked" else ""} id='#{@idUsarCache}'> Fazer cache dos dados no Searchlight Service
-    </label>
   </div>
 
   <button type='button' class='btn btn-default searchlight-btn-compartilhar'>Compartilhar</button>

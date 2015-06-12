@@ -21,6 +21,7 @@ class Dados
     @categorias_id = {}
 
 
+  addDataSource:(jsonDataSource)-> @dataPool.addDataSource(jsonDataSource)
   getFonte:(i)-> @dataPool.getDataSource(i)
   getFontes:-> @dataPool.getDataSources()
 
@@ -72,11 +73,13 @@ class Dados
       return @categorias[m.cat]
 
   getFilhos: (pai_id)->
-    m = @marcadores_filhos[pai_id] 
-    if m 
-      return m
-    else
-      return [] 
+    list = []
+    for ds,i in @dataPool.dataSources
+      filhos = ds.notesChildren[pai_id]
+      if filhos
+        list=list.concat(filhos)
+
+    return list
 
   adicioneFilho: (pai_id,filho) ->
     if not @marcadores_filhos[pai_id]

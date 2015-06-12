@@ -34,9 +34,9 @@ window.SL = (map_id) ->
 class Searchlight
 
   constructor: (opcoes={}) ->
-    @config = new Config(opcoes)
     @slsapi = new SLSAPI(opcoes)
     @slsapi.on SLSAPI.Config.EVENT_READY, (id)=>
+      @config = new Config(@slsapi.config)
       sl_referencias[@config.map_id]  = this 
 
       @create()
