@@ -1,5 +1,6 @@
 # classe responsavel pela visualizacao da aba opcoes
 PopupFontes = require('./popupFontes').PopupFontes
+Popup = require('./bspopup').Popup
 
 class TabConfiguracoes
   constructor: (config,@dados)->
@@ -36,53 +37,27 @@ class TabConfiguracoes
 
   onQRCodeClick: ()->
     self = @
-    if @slsapi.user.isLogged()
-      if not  @config.viewerTitle
+    if @dados.api.user.isLogged()
+      if not  @dados.api.mashup.title
         alert('Informe um titulo para sua visualização')
       else
-        hashid = md5(JSON.stringify(@config.viewerTitle))
-        @slsapi.notes.getByQuery("user=#{self.slsapi.user.user_id}&hid=#{hashid}",
-          (data)->
-            if data.length > 0
-              note = data[0]
-              # view ja existe entao vamos substituir
-              self.slsapi.notes.update(note.id,{config:self.config.toJSON()},
-                ()->
-                  self.showQRcode(hashid)
-                ,()->
-                  alert('Não foi possivel se conectar com Searchlight Storage')
-              )
-            else
-              # view nao existe deve registar
-              note = {}
-              console.log('entrei')
-              note.config = self.config.toJSON()
-
-              console.log('passei')
-              note.longitude = 0.0
-              note.latitude = 0.0
-              note.hid = hashid
-              note.user= self.slsapi.user.user_id
-              self.slsapi.notes.enviar(note,self.notebookConfigs,
-                ()->
-                  self.showQRcode(hashid)
-                ,(error)-> 
-                  console.log(arguments)
-                  alert('Não foi possivel conectar com SearchLight Storage')
-              )
-          ,() ->
-            alert('Não foi possivel se conectar com Searchlight Storage')
+        @dados.api.mashup.save(
+          (mashup)=>
+            @showQRcode(mashup.id)
+         ,(err)->
+            console.error('Não foi possivel se conectar com o Searchlight Storage:', err)
         )
+          
     else
       alert('Voce precisa estar conectado ao Searchlight Storage')
 
 
-  showQRcode: (hashid)->
+  showQRcode: (mashupid)->
     popup = Popup.getIS(@config)
     popup.setTitle("<p  style='padding:0px;margin:0px;text-align:center'>QR code para o aplicativo Searchlight Mobile</p>")
     popup.setBody("<br><div style='width:300px;margin:0px auto;' id='#{@containerQR}' > </div><br><p style='text-align:center'> Abra o aplicativo Searchlight Mobile e escolha a opção 'Vincular Visualização'. Clique em 'gerar código' para gerar um código de vinculação. Posicione o smartphone adequadamente para ler o código QR acima.</p>")
     popup.show()
-    url = "http://sl.wancharle.com/note/?hid=#{hashid}"
+    url = "http://sl.wancharle.com.br/mashup/#{mashupid}/"
     $("##{@containerQR}").empty().qrcode({ width:300,height:300,mode:0,'text': url})
 
   onSalvar: ()->
@@ -114,7 +89,7 @@ class TabConfiguracoes
       self.config.url = $(@).val()
 
     $("##{@idUrlSLS}").on 'change', (ev) ->
-      self.config.urlsls = $(@).val()
+      self.dados.api.config.serverURL = $(@).val()
 
     $("##{@idUsuario}").on 'change', (ev) ->
       self.config.slsUser = $(@).val()
@@ -123,16 +98,16 @@ class TabConfiguracoes
       self.config.slsPassword = $(@).val()
 
     $("##{@idViewerTitle}").on 'change', (ev) ->
-      self.config.viewerTitle = $(@).val()
+      self.dados.api.mashup.title = $(@).val()
 
 
     $("##{@config.configuracoes_id} button.searchlight-btn-login").on 'click', (ev) ->
-      self.slsapi.user.login(self.config.slsUser, self.config.slsPassword)
+      self.dados.api.user.login(self.config.slsUser, self.config.slsPassword)
 
     $("##{@config.configuracoes_id} button.searchlight-btn-logout").on 'click', (ev) ->
-      self.slsapi.user.logout(()->self.onLoginLogout())
+      self.dados.api.user.logout(()->self.onLoginLogout())
 
-    $(document).on 'slsapi.user:loginFinish slsapi.user:loginFail', () ->
+    $(document).on "#{SLSAPI.User.EVENT_LOGIN_FINISH} #{SLSAPI.User.EVENT_LOGIN_FAIL} #{SLSAPI.User.EVENT_LOGOUT_SUCCESS}", () ->
       self.onLoginLogout()
 
 
@@ -206,7 +181,7 @@ class TabConfiguracoes
 <legend>Searchlight Storage</legend>
   <div class='form-group'>
     <label for='urlsls'>Servidor Searchlight Storage</label>
-      <input type='url' class='form-control' value='#{@config.urlsls}' id='#{@idUrlSLS}' placeholder='informe o endereço do Searchlight Storage'>
+      <input type='url' class='form-control' value='#{@dados.api.config.serverURL}' id='#{@idUrlSLS}' placeholder='informe o endereço do Searchlight Storage'>
   </div>
   <div class='form-inline form-logout'>
     <div class='form-group'>
@@ -231,7 +206,7 @@ class TabConfiguracoes
 <legend>Compartilhamento</legend>
   <div class='form-group'>
     <label for='viewerTitle'>Título</label>
-    <input type='text' class='form-control' value='#{@config.viewerTitle}' id='#{@idViewerTitle}' placeholder='informe o título da sua visualização'>
+    <input type='text' class='form-control' value='#{@dados.api.mashup.title}' id='#{@idViewerTitle}' placeholder='informe o título da sua visualização'>
   </div>
 
   <button type='button' class='btn btn-default searchlight-btn-compartilhar'>Compartilhar</button>

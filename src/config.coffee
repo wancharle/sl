@@ -17,12 +17,8 @@ class Config
     @clusterizar =  d.get('clusterizar', true)
     
     @useBsPopup = d.get('useBsPopup', true)
-    @urlosm =  d.get('url_osm',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
+    @urlosm =  d.get('osmURL',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
 
-    @slsUser = d.get('sls_user','')
-    @slsPassword = ''
-    @urlsls =  d.get('url_sls',"http://sl.wancharle.com.br")
-    @viewerTitle = d.get('viewerTitle','')
 
    
   toJSON: ()->
@@ -32,11 +28,7 @@ class Config
       'esconder_icones': @esconder_icone
       'clusterizar':  @clusterizar
       'useBsPopup': @useBsPopup
-      'url_osm': @urlosm
-      'url_sls': @urlsls
-      'sls_user':@slsUser
-      'viewerTitle':@viewerTitle
-      'usarCache':@usarCache
+      'osmURL': @urlosm
     }
 
       

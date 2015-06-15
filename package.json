@@ -8,7 +8,7 @@
     "cnode": "coffee --output lib --compile src",
     "bundle": "npm run cnode;browserify  --no-bundle-external ./lib/searchlight.js -o ./build/bundle.js",
     "concat-leaf": "cat ./bower_components/leaflet/dist/leaflet-src.js  ./js/markercluster/leaflet.markercluster-src.js ./js/spin.js ./js/leaflet.spin.js ./build/bundle.js > ./build/bundle0.js",
-    "concat": "npm run concat-leaf; cat ./bower_components/jquery/dist/jquery.js ./bower_components/bootstrap/dist/js/bootstrap.js ./node_modules/slsapi/dist/slsapi.js ./build/bundle0.js > ./build/searchlight.js",
+    "concat": "npm run concat-leaf; cat ./bower_components/jquery/dist/jquery.js ./bower_components/jquery-qrcode/jquery.qrcode.min.js ./bower_components/bootstrap/dist/js/bootstrap.js ./node_modules/slsapi/dist/slsapi.js ./build/bundle0.js > ./build/searchlight.js",
     "min": "uglifyjs ./build/searchlight.js > ./build/searchlight.min.js",
     "minoff": "mv ./build/searchlight.js  ./build/searchlight.min.js",
     "compile": "npm run bundle; npm run concat;npm run minoff"
