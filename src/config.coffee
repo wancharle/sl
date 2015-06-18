@@ -24,8 +24,8 @@ class Config
   toJSON: ()->
     return {
       'container_id': @container_id
-      'icones': @icones
-      'esconder_icones': @esconder_icone
+      'icones': @Icones
+      'esconder_icones': @esconder_icones
       'clusterizar':  @clusterizar
       'useBsPopup': @useBsPopup
       'osmURL': @urlosm

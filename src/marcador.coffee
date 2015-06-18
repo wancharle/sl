@@ -1,3 +1,11 @@
+class Icones
+  @icones = {}
+  @getIcone: (id,config)->
+    i = Icones.icones[id+""]
+    if not i
+      i = new L.icon(config.Icones[id+""])
+      Icones.icones[id+""]=i
+    return i
 
 class Marcador
   constructor:(geoItem,config)->
@@ -8,8 +16,8 @@ class Marcador
     @latitude = parseFloatPTBR(geoItem.latitude)
     @longitude = parseFloatPTBR(geoItem.longitude)
     @texto = geoItem.texto
-    if geoItem.icon
-      @icon = geoItem.icon
+    if geoItem.icon_id
+      @icon = Icones.getIcone(geoItem.icon_id,config)
     else
       @icon = window.SL_ICON_PADRAO
     

@@ -137,7 +137,8 @@ class ClusterCtr
     cats_ord = @getCatsCluster()
     #----
     html = "<div class='clusterPopup'>"
-    if not @sl.Icones
+    if not @sl.config.Icones
+
       html+="<ul>"
       cat = cats_ord[0]
       for cat, i in cats_ord
@@ -145,9 +146,9 @@ class ClusterCtr
       html +="</ul>"
     else
       html+='<ul class="icones">'
-      for cat, i in cats_ord/cat
+      for cat, i in cats_ord
         cat_id = @sl.dados.getCategoriaId(cat[0])
-        iconUrl = @sl.Icones[cat_id].options.iconUrl
+        iconUrl = @sl.config.Icones[cat_id].iconUrl
         html += "<li>"
         html += "<p class='img'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick='SL(\""+@sl.config.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'><img src='"+iconUrl+"'></a></p>"
         html += "<p class='texto'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick=':SL(\""+@sl.config.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'>"+cat[1].length+"</a></p>"
