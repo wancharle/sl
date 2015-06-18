@@ -16,13 +16,11 @@ class Dados
 
   clear: =>
     @marcadores = {}
-    @marcadores_filhos = {}
-    @categorias = {}
-    @categorias_id = {}
-
 
   addDataSource:(jsonDataSource)-> @dataPool.addDataSource(jsonDataSource)
+
   getFonte:(i)-> @dataPool.getDataSource(i)
+
   getFontes:-> @dataPool.getDataSources()
 
   get_data: () =>
@@ -38,13 +36,11 @@ class Dados
       SLSAPI.events.trigger(@api.config.id,Dados.EVENT_DATA_LOADED)
     )
 
-
-
   carregaDados: (data,fonte)->
     console.log("fonte carregando: #{fonte.url}")
     try
       for geoItem in data
-        @addItemMarkers(geoItem)
+        @addItemMarkers(geoItem,fonte)
     catch e
       console.error(e.toString())
       @markers.fire("data:loaded")
@@ -56,21 +52,23 @@ class Dados
     itens = 0
     for cat in @getCategorias()
       itens+= @getCatByName(cat).length
-
     return itens
+
+  getCategoriaId: (cat_name)->
+    for ds, i in @getFontes()
+      catid =  ds.categories_id[cat_name]
+      if catid
+        return catid
+    return null
 
   # retorna a lista de marcadores de uma determinada categoria
   getCatByName: (cat_name)->
-    return @categorias[cat_name]
-
-  _getCatOrCreate: (m)=>
-    cat=@categorias[m.cat]
-    if cat
-      return cat
-    else
-      @categorias[m.cat] = []
-      @categorias_id[m.cat] = m.cat_id
-      return @categorias[m.cat]
+    markers = []
+    for ds, i in @getFontes()
+      catmarkers =  ds.categories[cat_name]
+      if catmarkers
+        markers = markers.concat(catmarkers)
+    return markers
 
   getFilhos: (pai_id)->
     list = []
@@ -81,15 +79,9 @@ class Dados
 
     return list
 
-  adicioneFilho: (pai_id,filho) ->
-    if not @marcadores_filhos[pai_id]
-      @marcadores_filhos[pai_id] = [ ]
-    @marcadores_filhos[pai_id].push(filho)
-
   addItemMarkers : (geoItem) =>
       m =  new Marcador(geoItem,@config)
-      cat = @_getCatOrCreate(m)
-      cat.push(m)
+      @marcadores[geoItem.hashid]=m
 
   getCatLatLng: (name) =>
       v = []
@@ -99,15 +91,19 @@ class Dados
 
   catAddMarkers:(name,cluster) =>
     for m in @getCatByName(name)
-      cluster.addLayer(m.getMark())
-
+      cluster.addLayer(@marcadores[m.hashid].getMark())
   
   addMarkersTo: (cluster) =>
     for cat in @getCategorias() #Object.keys(@categorias)
       @catAddMarkers(cat,cluster)
 
   getCategorias: ->
-    return (cat for cat in Object.keys(@categorias))
+    cats = []
+    for ds,i in @getFontes()
+      for cat,i in Object.keys(ds.categories)
+        if cat
+          cats.push(cat)
+    return cats
 
 module.exports = {'Dados':Dados}
 

@@ -114,13 +114,14 @@ class Controle
 
 
   addCatsToControl: (map_id)=>
-      if Object.keys(@sl.dados.categorias).length > 1
+      categorias = @sl.dados.getCategorias()
+      if categorias.length > 1
           op ="#"+map_id+ " div.searchlight-opcoes"
           ul =op + " ul"
           $(op).html("<ul></ul>")
           cats = []
-          for k of  @sl.dados.categorias
-              cats.push([k,@sl.dados.categorias[k].length])
+          for k in categorias
+              cats.push([k,@sl.dados.getCatByName(k).length])
           cats.sort( (a,b) -> b[1]-a[1])
           
           $(ul).empty()

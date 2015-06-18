@@ -34,5 +34,8 @@
     "bower": "^1.3.12",
     "browserify": "^10.2.4",
     "uglifyjs": "^2.4.10"
+  },
+  "dependencies": {
+    "slsapi": "^0.2.5"
   }
 }

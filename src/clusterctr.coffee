@@ -29,7 +29,7 @@ class ClusterCtr
           @clusterDuploClick(a)
       )
       @sl.markers.on('clusterclick',  (a) =>
-          if Object.keys(@sl.dados.categorias).length > 1
+          if @sl.dados.getCategorias().length > 1
               @clusterClick(a)
           else
               a.layer.zoomToBounds()
@@ -145,8 +145,8 @@ class ClusterCtr
       html +="</ul>"
     else
       html+='<ul class="icones">'
-      for cat, i in cats_ord
-        cat_id = @sl.dados.categorias_id[cat[0]]
+      for cat, i in cats_ord/cat
+        cat_id = @sl.dados.getCategoriaId(cat[0])
         iconUrl = @sl.Icones[cat_id].options.iconUrl
         html += "<li>"
         html += "<p class='img'><a title='Focar no subgrupo "+cat[0]+"' href='#' onclick='SL(\""+@sl.config.map_id+"\").control.clusterCtr.focar(\""+cat[0]+"\")'><img src='"+iconUrl+"'></a></p>"
