@@ -14,11 +14,11 @@ class ListaFilhos
         html+='<div class="panel panel-default">
                   <div class="panel-heading" role="tab" id="heading'+i+'">
                   <h4 class="panel-title"><a data-toggle="collapse" data-parent="#accordion" href="#collapse'+i+'" aria-expanded="true" aria-controls="collapse'+i+'">'
-        html+=f.title+'</a></h4></div>'
+        html+="#{f.title or f.user.username}</a></h4></div>"
         html+=' <div id="collapse'+i+'" class="panel-collapse collapse '+(if i<1 then 'in')+'" role="tabpanel" aria-labelledby="heading'+i+'">
-                    <div class="panel-body">'+f.texto + '</div>
+                    <div class="panel-body">'+"#{f.texto or f.comentarios}</div>
                 </div>
-              </div>'
+              </div>"
       html += '</div>'
       return html
     else
