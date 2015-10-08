@@ -1,9 +1,13 @@
 {
-  "name": "sl",
-  "version": "0.0.0",
+  "name": "SearchlightMap",
+  "version": "0.0.1",
   "homepage": "https://github.com/wancharle/sl",
   "authors": [
     "Wancharle Sebastião Quirino <wancharle@gmail.com>"
+  ],
+  "main": [
+    "js/smap.js",
+    "css/smap.css"
   ],
   "license": "MIT",
   "ignore": [
@@ -13,12 +17,17 @@
     "test",
     "tests"
   ],
+  "overrides": {
+    "angular": {
+      "dependencies": {
+        "jquery": "*"
+      }
+    }
+  },
   "dependencies": {
-    "jquery": "~2.1.1",
-    "leaflet": "~0.7.3",
-    "bootstrap": "~3.2.0",
-    "jquery-qrcode": "*",
-    "slsapi.js": "https://wancharle@bitbucket.org/wancharle/searchlight-service-api.git",
-    "superagent": "~1.2.0"
+    "angular": "~1.4.7",
+    "jquery": "~2.1.4",
+    "leaflet": "0.7.5",
+    "leaflet.markercluster": "Leaflet/Leaflet.markercluster#057931fe8814c4a425f376899cd185844a7a7dce"
   }
 }

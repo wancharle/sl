@@ -1,17 +1,13 @@
 {
-  "name": "searchlight",
-  "version": "0.0.0",
+  "name": "SearchlightMap",
+  "version": "0.0.1",
   "description": "Visualização de dados Crowdsourcing em mapas web",
-  "main": "index.js",
+  "main": "js/smap.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "cnode": "coffee --output lib --compile src",
-    "bundle": "npm run cnode;browserify  --no-bundle-external ./lib/searchlight.js -o ./build/bundle.js",
-    "concat-leaf": "cat ./bower_components/leaflet/dist/leaflet-src.js  ./js/markercluster/leaflet.markercluster-src.js ./js/spin.js ./js/leaflet.spin.js ./build/bundle.js > ./build/bundle0.js",
-    "concat": "npm run concat-leaf; cat ./bower_components/jquery/dist/jquery.js ./bower_components/jquery-qrcode/jquery.qrcode.min.js ./bower_components/bootstrap/dist/js/bootstrap.js ./node_modules/slsapi/dist/slsapi.js ./build/bundle0.js > ./build/searchlight.js",
-    "min": "uglifyjs ./build/searchlight.js > ./build/searchlight.min.js",
-    "minoff": "mv ./build/searchlight.js  ./build/searchlight.min.js",
-    "compile": "npm run bundle; npm run concat;npm run minoff"
+    "bowerdeps": "node bower_concat.js",
+    "coffee": "coffee --output ./js --compile ./coffee/",
+    "compile": "npm run coffee; npm run bowerdeps;"
   },
   "repository": {
     "type": "git",
@@ -31,11 +27,11 @@
   },
   "homepage": "https://github.com/wancharle/sl",
   "devDependencies": {
+    "coffee": "*",
     "bower": "^1.3.12",
-    "browserify": "^10.2.4",
-    "uglifyjs": "^2.4.10"
+    "clean-css": "^3.4.1",
+    "concat": "^1.0.0",
+    "main-bower-files": "^2.9.0"
   },
-  "dependencies": {
-    "slsapi": "^0.2.5"
-  }
+  "dependencies": {}
 }

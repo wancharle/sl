@@ -1,16 +1,16 @@
-<html>
+<!DOCTYPE html>
+<html lang='pt'>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />                                                                                                                            
-<meta name="viewport" content="width=device-width, initial-scale=1" /> 
-<script src="searchlight.min.js"></script>
-<script src="index.js"></script>
+<script src="../js/bowerdeps.js"></script>
+<script src="../js/smap.js"></script>
+<link rel='stylesheet' href="../css/estilos.min.css"/>
+<link rel='stylesheet' href="../css/smap.css"/>
 <style>
-#pac,#porto,#google { width:90%; margin:10px auto;}
-#map-pac,#map-porto,#map-google {width:100%; height:85%;}
-#lista-pac,#lista-porto,#lista-google { height: 85%!important; overflow: auto}
-</style>
-<body>
+html, body , #map {height: 100%;}
 
-<div id="porto"> </div>
-    </body>
+</style>
+<body ng-app="smap">
+
+<div sl-map  id='map' />
+</body>
 </html>
