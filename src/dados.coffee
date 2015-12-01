@@ -91,6 +91,9 @@ class Dados
 
   catAddMarkers:(name,cluster) =>
     for m in @getCatByName(name)
+      if m.trilha
+        polyline = L.polyline(m.trilha, {color: 'red'}) 
+        cluster.addLayer(polyline)
       cluster.addLayer(@marcadores[m.hashid].getMark())
   
   addMarkersTo: (cluster) =>

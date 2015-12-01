@@ -15,7 +15,7 @@ class Marcador
     @id_parent = geoItem.id_parent
     @latitude = parseFloatPTBR(geoItem.latitude)
     @longitude = parseFloatPTBR(geoItem.longitude)
-    @texto = geoItem.texto
+    @texto = geoItem.texto or geoItem.comentarios
     if geoItem.icon_id
       @icon = Icones.getIcone(geoItem.icon_id,config)
     else

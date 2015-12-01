@@ -15,8 +15,13 @@ class ListaFilhos
                   <div class="panel-heading" role="tab" id="heading'+i+'">
                   <h4 class="panel-title"><a data-toggle="collapse" data-parent="#accordion" href="#collapse'+i+'" aria-expanded="true" aria-controls="collapse'+i+'">'
         html+="#{f.title or f.user.username}</a></h4></div>"
+        extra = ''
+        if f.fotoURL
+          extra  = "<img src='#{f.fotoURL}' width='350px' height='350px' />"
+        if f.youtubeVideoId
+          extra += "<iframe width='320px' height='240px' src='//www.youtube.com/embed/#{f.youtubeVideoId}?rel=0' frameborder='0' allowfullscreen></iframe> "
         html+=' <div id="collapse'+i+'" class="panel-collapse collapse '+(if i<1 then 'in')+'" role="tabpanel" aria-labelledby="heading'+i+'">
-                    <div class="panel-body">'+"#{f.texto or f.comentarios}</div>
+                    <div class="panel-body">'+"<p>#{f.texto or f.comentarios}</p>#{extra}</div>
                 </div>
               </div>"
       html += '</div>'
