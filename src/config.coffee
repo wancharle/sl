@@ -13,6 +13,7 @@ class Config
  
     @Icones =  d.get('icones', null)
     @esconder_icones =  d.get('esconder_icones', true)
+    @ver_mais =  d.get('ver_mais', true)
 
     @clusterizar =  d.get('clusterizar', true)
     
@@ -26,6 +27,7 @@ class Config
       'container_id': @container_id
       'icones': @Icones
       'esconder_icones': @esconder_icones
+      'ver_mais': @ver_mais
       'clusterizar':  @clusterizar
       'useBsPopup': @useBsPopup
       'osmURL': @urlosm

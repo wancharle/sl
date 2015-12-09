@@ -23,11 +23,14 @@ class TabList
     html= '<table class="table">'
     for cat_name in @dados.getCategorias()
       for obj,i in @dados.getCatByName(cat_name)
+        extra = ""
+        if obj.fotoURL
+          extra = "<img src='#{obj.fotoURL}' height='100px'/>"
         if cat_name == 'undefined'
           cat_str = obj.user.username
         else 
           cat_str = cat_name
-        html= "#{html}<tr><td><a href='javascript:void(0);' data-index='#{i}' data-cat='#{cat_name}' class='tablist-item'> #{cat_str}</a></td><td>#{obj.texto or obj.comentarios}</td></tr>"
+        html= "#{html}<tr><td><a href='javascript:void(0);' data-index='#{i}' data-cat='#{cat_name}' class='tablist-item'> #{cat_str}</a></td><td>#{obj.texto or obj.comentarios}</td><td>#{extra}</td></tr>"
     html = "#{html}</table>" 
 
     $("##{@lista_id}").html(html)

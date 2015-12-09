@@ -46,7 +46,7 @@ class PopupMarcador
 
     if not m.listaFilhos
       m.listaFilhos = new ListaFilhos(m)
-    popup.setBody(m.texto+m.listaFilhos.getHTML())
+    popup.setBody(m.getTextoParaPopup()+m.listaFilhos.getHTML())
     popup.show()
 
 

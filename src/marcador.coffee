@@ -29,7 +29,33 @@ class Marcador
       @cat_id = 1
 
     @title = geoItem.title
+    @geoItem = geoItem
 
+  onPopupOpen:()->
+    img = document.getElementById('img-'+@geoItem.hashid)
+    p = document.getElementById('pimg-'+@geoItem.hashid)
+    if img.width > img.height
+      img.width = 400
+      p.width = 400
+    else
+      img.height = 200
+
+    
+
+  getTextoParaPopup: ()->
+    extra = ""
+    obj = @geoItem
+
+    if obj.fotoURL.indexOf('.jpg') > 0
+      foto= obj.fotoURL.replace('_250x250.jpg','_400x400.jpg')
+    else
+      foto = "#{obj.fotoURL}_400x400"
+    if obj.fotoURL
+      extra = "<p style='width:400px' id='pimg-#{@geoItem.hashid}'><img id='img-#{@geoItem.hashid}' src='#{foto}' /></p>"
+    if obj.youtubeVideoId
+        extra += "<div><iframe width='320px' height='240px' src='//www.youtube.com/embed/#{obj.youtubeVideoId}?rel=0' frameborder='0' allowfullscreen></iframe></div> "
+    return @texto + extra
+ 
   getMark: () ->
     if @m == null
       p =  [@latitude,@longitude ]
@@ -37,7 +63,11 @@ class Marcador
       m.setIcon(@icon)
       @m = m
       @m.slinfo = this
-      html="#{m.slinfo.texto}<p><a href='javascript:void(0);' onclick='Searchlight.PopupMarcador.show(\"#{@config.map_id}\")'>ver mais</a></p>"
+      @m.on('popupopen',()=> @onPopupOpen())
+      if @config.ver_mais
+        html="#{m.slinfo.texto}<p><a href='javascript:void(0);' onclick='Searchlight.PopupMarcador.show(\"#{@config.map_id}\")'>ver mais</a></p>"
+      else
+        html= @getTextoParaPopup()
       @m.bindPopup(html,{'maxWidth':640})
     return @m
 
