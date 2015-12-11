@@ -58,6 +58,7 @@ div.clusterPopup ul.icones li {
     margin-right:2px;
     margin-left:2px;
 }
+ 
 div.clusterPopup ul.icones p{
     margin:0px;
     padding:0px;
@@ -105,10 +106,8 @@ div.clusterPopup ul.icones li p.texto{
      float:right;
      }
 
-@-moz-document url-prefix() {
     div.clusterPopup ul.icones {
         width:220px;
-        max-width:260px!important;
+        max-width:350px!important;
         }
-} 
 
