@@ -40,17 +40,15 @@ class Marcador
     else
       img.height = 200
 
-    
-
   getTextoParaPopup: ()->
     extra = ""
     obj = @geoItem
 
-    if obj.fotoURL.indexOf('.jpg') > 0
-      foto= obj.fotoURL.replace('_250x250.jpg','_400x400.jpg')
-    else
-      foto = "#{obj.fotoURL}_400x400"
     if obj.fotoURL
+      if obj.fotoURL.indexOf('.jpg') > 0
+        foto= obj.fotoURL.replace('_250x250.jpg','_400x400.jpg')
+      else
+        foto = "#{obj.fotoURL}_400x400"
       extra = "<p style='width:400px' id='pimg-#{@geoItem.hashid}'><img id='img-#{@geoItem.hashid}' src='#{foto}' /></p>"
     if obj.youtubeVideoId
         extra += "<div><iframe width='320px' height='240px' src='//www.youtube.com/embed/#{obj.youtubeVideoId}?rel=0' frameborder='0' allowfullscreen></iframe></div> "
