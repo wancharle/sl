@@ -1,7 +1,7 @@
 controls = require('./control')
 SLControl = controls.SLControl
 SLUndoRedoControl = controls.SLUndoRedoControl
-
+PopupMarcador = require('./popupMarcador').PopupMarcador
 ClusterCtr = require('./clusterctr').ClusterCtr
 
 class Controle
@@ -47,11 +47,14 @@ class Controle
     @sl.map.on('moveend', ()=>
         @atualizarIconesMarcVisiveis()
     )
-    
-    @sl.markers.on('click', (ev)=>
-        @markerClick(ev)
+      
+    @config.on('marcador:open', (ev,evData)=>
+        @markerOpen(ev,evData)
     )
   
+    @config.onChild('click','.marker-ver-mais',(ev)=>
+      PopupMarcador.show(@ultimo_marcador_clicado)
+    )
     @clusterCtr = new ClusterCtr(@sl)
 
   hide_opcoes : (event) =>
@@ -77,11 +80,13 @@ class Controle
   mostrarIconesMarcVisiveis: () =>
       for m, i in @getMarcadoresVisiveis()
           m.setIcon(m.slinfo.icon)
+          m.slinfo.escondido = false 
 
   esconderIconesMarcVisiveis: ()=>
       markers = @getMarcadoresVisiveis()
       for m, i in markers 
           m.setIcon(window.SL_ICON_CLUSTER)
+          m.slinfo.escondido = true
 
   getMarcadoresVisiveis:()=>
       if @clusterCtr.camadaAnalise
@@ -95,23 +100,17 @@ class Controle
               marcadores_visiveis.push(mark)
       return marcadores_visiveis
 
-  markerClick: (ev) =>
-      m = ev.layer
-      @marcador_clicado = m
-      @ultimo_marcador_clicado = m
-      if @sl.config.esconder_icones
-          if m.slinfo.ultimo_zoom
-              @sl.map.setView(m.slinfo.ultimo_center,m.slinfo.ultimo_zoom)
-              m.slinfo.ultimo_zoom = null 
-              m.slinfo.ultimo_center = null
-              @sl.map.closePopup()
-          else
+  markerOpen:(ev,evData)=>
+    #console.log(ev,evData)
+    m = evData.marcador
+    @ultimo_marcador_clicado = m
+    @marcador_clicado = m
+    if @sl.config.esconder_icones and m.slinfo.escondido
               m.slinfo.ultimo_zoom = @sl.map.getZoom()
               m.slinfo.ultimo_center = @sl.map.getCenter()
               center = new L.LatLng(m.slinfo.latitude,m.slinfo.longitude)
               @sl.map.setView(center, 18)
-              #@showMarcadorPopup(m) 
-
+    
 
   addCatsToControl: (map_id)=>
       categorias = @sl.dados.getCategorias()

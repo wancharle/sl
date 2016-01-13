@@ -1,6 +1,5 @@
 Dados = require('./dados').Dados
 Popup = require('./bspopup').Popup
-Controle = require('./controle').Controle
 
 class ListaFilhos
   constructor: (marcador_pai)->
@@ -30,11 +29,9 @@ class ListaFilhos
       return ""
 
 class PopupMarcador
-  @show: (map_id) ->
-    sl = SL(map_id)
-    config = sl.config
-    popup = Popup.getIS(config)
-    m=Controle.getIS(config).ultimo_marcador_clicado.slinfo #TODO: colocar privado. criar metodo para retorna essa info
+  @show: (marcador) ->
+    m=marcador.slinfo
+    popup = Popup.getIS(m.config)
 
     if Searchlight.debug
       console.log(m)

@@ -40,6 +40,7 @@ class Searchlight
       sl_referencias[@config.map_id]  = this 
 
       @create()
+      @bindEvents()
       $('.collapse').collapse()
 
       @dados = new Dados(this)
@@ -47,6 +48,7 @@ class Searchlight
       @tabList = new TabList(@config)
       @tabConfiguracoes = new TabConfiguracoes(@config,@dados)
 
+  
   getIS: =>  # retorna a string da instancia
     return "SL(\"#{@config.map_id}\")" 
 
@@ -63,7 +65,7 @@ class Searchlight
       <div class='tab-pane' id='tab-#{@config.configuracoes_id}' ><div class='searchlight-tab' id='#{@config.configuracoes_id}'> </div> </div>
     </div> ")
     @bsPopup = new Popup(@config)
-
+  
     @CamadaBasica = L.tileLayer(@config.urlosm,  { 'attribution': attribution, 'maxZoom': 18 })
     @map = L.map(@config.map_id, {layers:[@CamadaBasica],'center': SENADO_FEDERAL,'zoom': 13}) #TODO: mudar centro e zoom 
     
@@ -76,35 +78,39 @@ class Searchlight
    
     # criando classe para controlar o mapa
     @control = new  Controle(this)
-   
-    # amarrando eventos
+
+  bindEvents: ()=>
     @slsapi.on SLSAPI.dataPool.DataPool.EVENT_LOAD_START, () => 
       console.log('dados carregando')
       @map.spin(true)
-
   
-    SLSAPI.events.on @slsapi.config.id,Dados.EVENT_DATA_LOADED, () => 
-      console.log('segundo evento')
-      @markers.clearLayers()
-      @dados.addMarkersTo(@markers)
-      @control.addCatsToControl(@config.map_id)
-      @control.atualizarIconesMarcVisiveis()
+    SLSAPI.events.on @slsapi.config.id,Dados.EVENT_DATA_LOADED, () =>
+      @onDataLoaded()
 
-      # ajusta view aos zoom inicial dos marcadores
-      if @map.getBoundsZoom(@markers.getBounds()) == @map.getZoom()
-        @executandoZoomDeCarregamento = false
-      else
-        @map.fitBounds(@markers.getBounds())
-        @executandoZoomDeCarregamento = true
 
-      # para o loading
-      @markers.fire("data:loaded")
 
-      if @executandoZoomDeCarregamento == false
-        $("##{@config.container_id}").trigger('mapa:carregado')
+  onDataLoaded: ()->
+    console.log('segundo evento')
+    @markers.clearLayers()
+    @dados.addMarkersTo(@markers)
+    @control.addCatsToControl(@config.map_id)
+    @control.atualizarIconesMarcVisiveis()
 
-      # ao terminar de carregar faz zoom automatico sobre area dos dados. 
-      @autoZoom() #FIXME: nem sempre eh necessário, esta aqui apenas por causa de um bug em alguns mapas.
+    # ajusta view aos zoom inicial dos marcadores
+    if @map.getBoundsZoom(@markers.getBounds()) == @map.getZoom()
+      @executandoZoomDeCarregamento = false
+    else
+      @map.fitBounds(@markers.getBounds())
+      @executandoZoomDeCarregamento = true
+
+    # para o loading
+    @markers.fire("data:loaded")
+
+    if @executandoZoomDeCarregamento == false
+      $("##{@config.container_id}").trigger('mapa:carregado')
+
+    # ao terminar de carregar faz zoom automatico sobre area dos dados. 
+    @autoZoom() #FIXME: nem sempre eh necessário, esta aqui apenas por causa de um bug em alguns mapas.
   
 
   autoZoom: () =>

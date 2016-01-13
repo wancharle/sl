@@ -20,7 +20,17 @@ class Config
     @useBsPopup = d.get('useBsPopup', true)
     @urlosm =  d.get('osmURL',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
 
+  trigger: (eventName,evObj)->
+    $("##{@container_id}").trigger(eventName,evObj)
 
+  on: (eventName,cb)->
+    $("##{@container_id}").on(eventName,cb)
+
+  onChild: (eventName,childselector,cb)->
+    $("##{@container_id}").on(eventName,childselector,cb)
+ 
+  off: (eventName)->
+    $("##{@container_id}").off(eventName)
    
   toJSON: ()->
     return {

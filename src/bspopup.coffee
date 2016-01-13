@@ -31,7 +31,6 @@ class Popup
 </div>'
     if not $("##{@id}").length
       $("body").prepend(corpo)
-
    
   show: (classe) ->
 

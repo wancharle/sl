@@ -31,7 +31,9 @@ class Marcador
     @title = geoItem.title
     @geoItem = geoItem
 
-  onPopupOpen:()->
+  onPopupOpen:(e)->
+    e.marcador = @m
+    @config.trigger('marcador:open',e)
     img = document.getElementById('img-'+@geoItem.hashid)
     p = document.getElementById('pimg-'+@geoItem.hashid)
     if img.width > img.height
@@ -61,9 +63,9 @@ class Marcador
       m.setIcon(@icon)
       @m = m
       @m.slinfo = this
-      @m.on('popupopen',()=> @onPopupOpen())
+      @m.on('popupopen',(e)=> @onPopupOpen(e))
       if @config.ver_mais
-        html="#{m.slinfo.texto}<p><a href='javascript:void(0);' onclick='Searchlight.PopupMarcador.show(\"#{@config.map_id}\")'>ver mais</a></p>"
+        html="#{m.slinfo.texto}<p><a class='marker-ver-mais'>ver mais</a></p>"
       else
         html= @getTextoParaPopup()
       @m.bindPopup(html,{'maxWidth':640})
