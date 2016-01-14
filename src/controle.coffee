@@ -29,10 +29,6 @@ class Controle
     #registrando eventos popup e markers
     
     @sl.map.on('zoomend', ()=>
-        if @marcador_clicado == null
-            @sl.map.closePopup()
-        else
-            @marcador_clicado = null
         if @clusterCtr.desfocou
             @clusterCtr.desfocou = false
             @clusterCtr.mostraPopup()
@@ -53,7 +49,7 @@ class Controle
     )
   
     @config.onChild('click','.marker-ver-mais',(ev)=>
-      PopupMarcador.show(@ultimo_marcador_clicado)
+      PopupMarcador.show(@ultimoMarcadorAberto)
     )
     @clusterCtr = new ClusterCtr(@sl)
 
@@ -103,13 +99,10 @@ class Controle
   markerOpen:(ev,evData)=>
     #console.log(ev,evData)
     m = evData.marcador
-    @ultimo_marcador_clicado = m
-    @marcador_clicado = m
+    @ultimoMarcadorAberto = m
     if @sl.config.esconder_icones and m.slinfo.escondido
-              m.slinfo.ultimo_zoom = @sl.map.getZoom()
-              m.slinfo.ultimo_center = @sl.map.getCenter()
-              center = new L.LatLng(m.slinfo.latitude,m.slinfo.longitude)
-              @sl.map.setView(center, 18)
+      center = new L.LatLng(m.slinfo.latitude,m.slinfo.longitude)
+      @sl.map.setView(center, 18)
     
 
   addCatsToControl: (map_id)=>
