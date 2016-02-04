@@ -43,9 +43,12 @@ class Popup
     $("##{@id}").modal('hide')
 
   setTitle: (title) ->
-    $("##{@id} h4.modal-title").html(title)
+    ob = $("##{@id} h4.modal-title")
+    ob.empty()
+    ob.html(title)
 
   setBody: (body,button_title='OK',callback=null,cancelar=false,callback_cancelar = null) ->
+    $("##{@id} div.modal-body").empty()
     $("##{@id} div.modal-body").html(body)
     $("##{@id} div.modal-footer button.btn-primary").html(button_title) 
 

@@ -1,3 +1,6 @@
+
+dataview = require('./dataview')
+
 class Icones
   @icones = {}
   @getIcone: (id,config)->
@@ -32,13 +35,7 @@ class Marcador
     @geoItem = geoItem
 
   corrigeImagem: () ->
-    img = document.getElementById('img-'+@geoItem.hashid)
-    p = document.getElementById('pimg-'+@geoItem.hashid)
-    if img.width > img.height
-      img.width = 400
-      p.width = 400
-    else
-      img.height = 200
+    dataview.corrigeImagem(@geoItem)
 
   onPopupOpen:(e)->
     e.marcador = @m
@@ -46,19 +43,7 @@ class Marcador
     @corrigeImagem()
 
   getTextoParaPopup: ()->
-    extra = ""
-    obj = @geoItem
-
-    if obj.fotoURL
-      if obj.fotoURL.indexOf('.jpg') > 0
-        foto= obj.fotoURL.replace('_250x250.jpg','_400x400.jpg')
-      else
-        foto = "#{obj.fotoURL}_400x400"
-      extra = "<p style='width:400px' id='pimg-#{@geoItem.hashid}'><img id='img-#{@geoItem.hashid}' src='#{foto}' /></p>"
-    if obj.youtubeVideoId
-        extra += "<div><iframe width='320px' height='240px' src='//www.youtube.com/embed/#{obj.youtubeVideoId}?rel=0' frameborder='0' allowfullscreen></iframe></div> "
-    return @texto + extra
- 
+    return dataview.getTextoParaPopup(@geoItem,@texto)
   getMark: () ->
     if @m == null
       p =  [@latitude,@longitude ]

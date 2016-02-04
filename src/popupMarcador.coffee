@@ -20,7 +20,7 @@ class ListaFilhos
         if f.youtubeVideoId
           extra += "<iframe width='320px' height='240px' src='//www.youtube.com/embed/#{f.youtubeVideoId}?rel=0' frameborder='0' allowfullscreen></iframe> "
         html+=' <div id="collapse'+i+'" class="panel-collapse collapse '+(if i<1 then 'in')+'" role="tabpanel" aria-labelledby="heading'+i+'">
-                    <div class="panel-body">'+"<p>#{f.texto or f.comentarios}</p>#{extra}</div>
+                    <div class="panel-body">'+"<p>#{f.texto or f.comentarios or ""}</p>#{extra}</div>
                 </div>
               </div>"
       html += '</div>'

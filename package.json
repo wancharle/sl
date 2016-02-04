@@ -36,6 +36,6 @@
     "uglifyjs": "^2.4.10"
   },
   "dependencies": {
-    "slsapi": "^0.2.5"
+    "slsapi": "^0.3.0"
   }
 }
