@@ -45,6 +45,7 @@ class PopupMarcador
       m.listaFilhos = new ListaFilhos(m)
     popup.setBody(m.getTextoParaPopup()+m.listaFilhos.getHTML())
     popup.show()
+    m.corrigeImagem()
 
 
 module.exports = {PopupMarcador:PopupMarcador}

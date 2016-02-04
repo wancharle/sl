@@ -31,9 +31,7 @@ class Marcador
     @title = geoItem.title
     @geoItem = geoItem
 
-  onPopupOpen:(e)->
-    e.marcador = @m
-    @config.trigger('marcador:open',e)
+  corrigeImagem: () ->
     img = document.getElementById('img-'+@geoItem.hashid)
     p = document.getElementById('pimg-'+@geoItem.hashid)
     if img.width > img.height
@@ -41,6 +39,11 @@ class Marcador
       p.width = 400
     else
       img.height = 200
+
+  onPopupOpen:(e)->
+    e.marcador = @m
+    @config.trigger('marcador:open',e)
+    @corrigeImagem()
 
   getTextoParaPopup: ()->
     extra = ""
