@@ -68,7 +68,7 @@ class Marcador
         html="#{m.slinfo.texto}<p><a class='marker-ver-mais'>ver mais</a></p>"
       else
         html= @getTextoParaPopup()
-      @m.bindPopup(html,{'maxWidth':640})
+      @m.bindPopup(html,{'maxWidth':640,autoPan:false})
     return @m
 
 
