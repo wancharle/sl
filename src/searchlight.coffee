@@ -125,6 +125,17 @@ class Searchlight
     @map.removeLayer(@markers)
     @map_ultimo_zoom =  @map.getZoom()
     @map_ultimo_center = @map.getCenter()
+
+  openMarker: (lat,lon,hashid)->
+    # abre o popup do marcador automaticamente
+    @map.setView([lat,lon],14,{reset:true})
+    bounds = @map.getBounds()
+    @markers.eachLayer( (marker) ->
+        if (bounds.contains(marker.getLatLng()) and marker.slinfo.id == hashid)
+          marker.fireEvent('click')
+    )
+    
+    
 Searchlight.Popup = Popup
 Searchlight.PopupMarcador= PopupMarcador
 window.Searchlight = Searchlight
