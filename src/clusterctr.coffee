@@ -158,7 +158,7 @@ class ClusterCtr
     html +="<p class='center'><input type='button' onclick='SL(\""+@sl.config.map_id+"\").control.clusterCtr.zoomGrupo();' value='expandir grupo' /></p>"
     html +="</div>"
     if @sl.config.useBsPopup
-      @sl.bsPopup.setTitle("Dados sobre este do grupo")
+      @sl.bsPopup.setTitle("Dados sobre este agrupamento")
       @sl.bsPopup.setBody(html)
     else
       @popup.setContent(html)

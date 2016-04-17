@@ -4,11 +4,12 @@ Popup = require('./bspopup').Popup
 class TabConfiguracoes
   constructor: (config,@dados)->
     @config = config
-   
-    @idFontesDados = @config.container_id + '-ulFontesDados'
 
     @idUrlOSM = config.container_id + '-urlosm'
     @idClusterizar = @config.container_id + '-clusterizar'
+    @idEsconderIcones = @config.container_id + '-esconder-icones'
+    @idVerMais = @config.container_id + '-ver-mais'
+    @idUseBsPopup = @config.container_id + '-use-popup'
     
     @idUrlSLS = config.container_id + '-urlsls'
     @idUsuario = config.container_id + '-usuario'
@@ -78,6 +79,12 @@ class TabConfiguracoes
     self = @
     $("##{@idClusterizar}").on 'change', (ev) ->
       self.config.clusterizar = @.checked
+    $("##{@idEsconderIcones}").on 'change', (ev) ->
+      self.config.esconder_icones = @.checked
+    $("##{@idVerMais}").on 'change', (ev) ->
+      self.config.ver_mais = @.checked
+    $("##{@idUseBsPopup}").on 'change', (ev) ->
+      self.config.useBsPopup = @.checked
 
 
     $("##{@idUrlOSM}").on 'change', (ev) ->
@@ -126,9 +133,24 @@ class TabConfiguracoes
     <label for='urlosm'>Servidor Open Street Map</label>
     <input type='url' class='form-control' value='#{@config.urlosm}' id='#{@idUrlOSM}' placeholder='informe uma url do tipo OSM'>
   </div>
-  <div class='checkbox'>
+   <div class='checkbox'>
     <label>
       <input type='checkbox' #{if @config.clusterizar then "checked" else ""} id='#{@idClusterizar}'> Agrupar marcadores
+    </label>
+  </div>
+  <div class='checkbox'>
+    <label>
+      <input type='checkbox' #{if @config.esconder_icones then "checked" else ""} id='#{@idEsconderIcones}'> Esconder ícones nos níveis de zoom superiores
+    </label>
+  </div>
+  <div class='checkbox'>
+    <label>
+      <input type='checkbox' #{if @config.ver_mais then "checked" else ""} id='#{@idVerMais}'> Opção 'ver mais' nos popups dos marcadores
+    </label>
+  </div>
+  <div class='checkbox'>
+    <label>
+      <input type='checkbox' #{if @config.useBsPopup then "checked" else ""} id='#{@idUseBsPopup}'> Agrupamento exibe popup do grupo de forma modal
     </label>
   </div>
 </fieldset>
@@ -178,7 +200,6 @@ class TabConfiguracoes
 </form>"
 
     $("##{@config.configuracoes_id}").html(html)
-    @renderFontes()
     @bind()
 
 module.exports = {TabConfiguracoes:TabConfiguracoes}
