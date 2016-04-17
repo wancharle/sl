@@ -1,5 +1,4 @@
 # classe responsavel pela visualizacao da aba opcoes
-PopupFontes = require('./popupFontes').PopupFontes
 Popup = require('./bspopup').Popup
 
 class TabConfiguracoes
@@ -7,7 +6,6 @@ class TabConfiguracoes
     @config = config
    
     @idFontesDados = @config.container_id + '-ulFontesDados'
-    @popupFontes = new PopupFontes(config,@dados)
 
     @idUrlOSM = config.container_id + '-urlosm'
     @idClusterizar = @config.container_id + '-clusterizar'
@@ -117,51 +115,10 @@ class TabConfiguracoes
     $("##{@config.configuracoes_id} button.searchlight-btn-salvar").on 'click', (ev) ->
       self.onSalvar(ev)
 
-    $("##{@config.configuracoes_id} button.searchlight-btn-add-fonte").on 'click', (ev) ->
-      self.popupFontes.setFonte(null,null)
-      self.popupFontes.renderPopup()
-
-    $("##{@config.container_id}").on "fontes:update", (ev)->
-      self.renderFontes()
-
-
-  renderFontes: ()->
-    html = ""
-    for fonte,i in @dados.getFontes()
-      html+="<li class='list-group-item'><span class='pull-right'><a class='link-alterar' data-fonte='#{i}' href='#'>Alterar</a> | <a class='link-remover' data-fonte='#{i}' href='#'>Remover</a></span> <a href='#{fonte.url}' target='_blank'>#{fonte.url}</a></span></li>"
-
-    $("##{@idFontesDados}").html(html)
-
-    # self aponta para classe atual devido quebra do escopo
-    self = @
-
-    $("##{@config.configuracoes_id} a.link-remover").on 'click', (ev) ->
-      id_fonte = $(this).data('fonte')
-      fonte = self.dados.getFonte(id_fonte)
-      if confirm("tem certeza que deseja remover esta fonte de dados:\n#{fonte.url}")
-        self.dados.removeFonte(id_fonte)
-        self.renderFontes()
-
-
-    $("##{@config.configuracoes_id} a.link-alterar").on 'click', (ev) ->
-      id_fonte = $(this).data('fonte')
-      fonte = self.dados.getFonte(id_fonte)
-      self.popupFontes.setFonte(fonte,id_fonte)
-      self.popupFontes.renderPopup(null,'Alterar') 
-
-
+  
   render: ()->
     html="
 <form >
-<br>
-<fieldset>
-<legend>Fontes de dados</legend>
-  <div class='form-group'>
-    <ul class='list-group' id='#{@idFontesDados}'></ul>
-    <button type='button' class='btn btn-primary searchlight-btn-add-fonte'>Adicionar fonte</button>
-  </div>
-</fieldset>
-
 <br>
 <fieldset>
 <legend>Mapa</legend>
