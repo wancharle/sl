@@ -1,6 +1,6 @@
 {
   "name": "searchlight",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Visualização de dados Crowdsourcing em mapas web",
   "main": "index.js",
   "scripts": {
