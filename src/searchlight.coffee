@@ -7,6 +7,7 @@ Controle = require('./controle').Controle
 Config = require('./config').Config
 PopupMarcador = require('./popupMarcador').PopupMarcador
 TabList = require('./lista').TabList
+ViewExtra = require('./viewExtra').ViewExtra
 TabConfiguracoes = require('./tabConfiguracoes').TabConfiguracoes
 Popup = require('./bspopup').Popup
 
@@ -53,15 +54,17 @@ class Searchlight
     return "SL(\"#{@config.map_id}\")" 
 
   create: () =>
+    @viewExtra = new ViewExtra(@config)
     # criando container:
     $("##{@config.container_id}").html("<ul class='nav nav-tabs' role='tablist'>
     <li class='active'><a data-toggle='tab' href='##{@config.tab_id}'>Mapa</a></li>
     <li><a data-toggle='tab' href='#tab-#{@config.lista_id}'>Lista</a></li>
+    #{@viewExtra.renderLi()}
     <li><a data-toggle='tab' href='#tab-#{@config.configuracoes_id}'>Configurações</a></li>
     </ul>
     <div class='tab-content'>
       <div class='tab-pane active' id='#{@config.tab_id}'><div id='#{@config.map_id}' > </div> </div>
-      <div class='tab-pane' id='tab-#{@config.lista_id}' ><div class='searchlight-tab' id='#{@config.lista_id}'> </div> </div>
+      <div class='tab-pane' id='tab-#{@config.lista_id}' ><div class='searchlight-tab' id='#{@config.lista_id}'> </div> </div>#{@viewExtra.renderPane()}
       <div class='tab-pane' id='tab-#{@config.configuracoes_id}' ><div class='searchlight-tab' id='#{@config.configuracoes_id}'> </div> </div>
     </div> ")
     @bsPopup = new Popup(@config)
@@ -91,6 +94,10 @@ class Searchlight
 
   onDataLoaded: ()->
     console.log('segundo evento')
+    setTimeout( ()->
+      $("li.viewExtra a").click()
+      console.log('clickei');
+    ,1)
     @markers.clearLayers()
     @dados.addMarkersTo(@markers)
     @control.addCatsToControl(@config.map_id)
@@ -108,6 +115,7 @@ class Searchlight
 
     if @executandoZoomDeCarregamento == false
       $("##{@config.container_id}").trigger('mapa:carregado')
+    
 
     # ao terminar de carregar faz zoom automatico sobre area dos dados. 
     @autoZoom() #FIXME: nem sempre eh necessário, esta aqui apenas por causa de um bug em alguns mapas.

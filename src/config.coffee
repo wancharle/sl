@@ -5,10 +5,12 @@ class Config
     @apiconf.register(@)
 
   parseOpcoes: (d)->
+    @opcoes = d.data
     @container_id =  d.get('container_id','map')
     @tab_id = "tab-"+ @container_id
     @map_id = "map-"+ @container_id
     @lista_id = "lista-"+ @container_id
+    @view_id = "view-"+ @container_id
     @configuracoes_id = "configuracoes-"+ @container_id
  
     @Icones =  d.get('icones', null)
@@ -19,6 +21,8 @@ class Config
     
     @useBsPopup = d.get('useBsPopup', true)
     @urlosm =  d.get('osmURL',"http://{s}.tile.osm.org/{z}/{x}/{y}.png")
+    @viewExtra =  d.get('viewExtra','')
+    console.log(@viewExtra)
 
   trigger: (eventName,evObj)->
     $("##{@container_id}").trigger(eventName,evObj)
