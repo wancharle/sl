@@ -43,7 +43,7 @@ function exemplo_markercluster(){
         map2.setZoom(14);
 }
 portoalegrecc_json = "http://portoalegre.cc/causes/visibles?topLeftY=-29.993308319952344&topLeftX=-51.05793032165525&bottomRightY=-30.127023880027313&bottomRightX=-51.34906801696775&currentZoom=1&maxZoom=6";
-pacc_jsonp = "https://dl.dropbox.com/u/877911/portoalegre.js";
+pacc_jsonp = "http://wancharle.github.io/sl/js/exemplos/portoalegre.js";
 Icones = {
   
 };
